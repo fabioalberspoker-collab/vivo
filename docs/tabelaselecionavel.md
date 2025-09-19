@@ -1,0 +1,2 @@
+Ao clicar em "Adicionar Novos Filtros" o usuário pode escolher a "Tabela de Origem" e o "Campo da Tabela" aonde o filtro vai ser aplicado.
+A "Tabela de Origem" deve ser um selecionável com as tabelas que existem dentro do banco de dados no supabase
