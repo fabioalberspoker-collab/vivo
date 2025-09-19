@@ -57,7 +57,8 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // Function to load and process prompt template
-function loadPromptTemplate(columnName: string, description: string, table: string = 'contracts', sample: unknown[] = []): string {
+function 
+loadPromptTemplate(columnName: string, description: string, table: string = 'contracts', sample: unknown[] = []): string {
   try {
     const templatePath = path.join(__dirname, '../src/integrations/ai/seletorFiltro.md');
     console.log('📄 [TEMPLATE] Carregando template do arquivo:', templatePath);
