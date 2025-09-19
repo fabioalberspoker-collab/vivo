@@ -38,9 +38,13 @@ export const useCustomFilters = () => {
           type: filter.tipo as CustomFilter['type'],
           table: filter.tabela_origem,
           field: filter.campo_origem,
-          options: filter.configuracoes ? (filter.configuracoes as any).options : undefined
+          options: filter.configuracoes ? 
+            (filter.configuracoes as Record<string, unknown>).options as string[] || 
+            (filter.configuracoes as Record<string, unknown>).opcoes as string[] || 
+            [] : []
         }));
         
+        console.log('📥 [SUPABASE] Filtros carregados do banco:', transformedFilters);
         setCustomFilters(transformedFilters);
       }
     } catch (error) {
@@ -59,22 +63,31 @@ export const useCustomFilters = () => {
     try {
       setIsLoading(true);
       
+      console.log('💾 [SUPABASE] Salvando filtro no banco:', filter);
+      
+      const dataToInsert = {
+        nome_filtro: filter.name,
+        tipo: filter.type,
+        tabela_origem: filter.table,
+        campo_origem: filter.field,
+        configuracoes: {
+          options: filter.options || [],
+          type: filter.type,
+          // Incluir outras configurações se existirem
+          ...(filter.options && filter.options.length > 0 && { opcoes: filter.options })
+        }
+      };
+      
+      console.log('💾 [SUPABASE] Dados a serem inseridos:', dataToInsert);
+      
       const { data, error } = await supabase
         .from('filtros_personalizados')
-        .insert({
-          nome_filtro: filter.name,
-          tipo: filter.type,
-          tabela_origem: filter.table,
-          campo_origem: filter.field,
-          configuracoes: {
-            options: filter.options || []
-          }
-        })
+        .insert(dataToInsert)
         .select()
         .single();
 
       if (error) {
-        console.error('Error saving filter:', error);
+        console.error('❌ [SUPABASE] Error saving filter:', error);
         toast({
           title: "Erro ao salvar filtro",
           description: "Não foi possível salvar o filtro.",
@@ -83,23 +96,34 @@ export const useCustomFilters = () => {
         return;
       }
 
-      if (data) {
-        const newFilter: CustomFilter = {
-          id: data.id,
-          name: data.nome_filtro,
-          type: data.tipo as CustomFilter['type'],
-          table: data.tabela_origem,
-          field: data.campo_origem,
-          options: data.configuracoes ? (data.configuracoes as any).options : undefined
-        };
-        
-        setCustomFilters(prev => [newFilter, ...prev]);
-        
-        toast({
-          title: "Filtro salvo",
-          description: `O filtro "${filter.name}" foi salvo com sucesso.`
-        });
+      if (!data) {
+        console.error('❌ [SUPABASE] No data returned from insert');
+        return;
       }
+
+      console.log('✅ [SUPABASE] Filtro salvo com sucesso:', data);
+
+      // Add the new filter to the local state
+      const newFilter: CustomFilter = {
+        id: data.id,
+        name: data.nome_filtro,
+        type: data.tipo as CustomFilter['type'],
+        table: data.tabela_origem,
+        field: data.campo_origem,
+        options: data.configuracoes ? 
+          (data.configuracoes as Record<string, unknown>).options as string[] || 
+          (data.configuracoes as Record<string, unknown>).opcoes as string[] || 
+          [] : []
+      };
+      
+      console.log('✅ [SUPABASE] Filtro convertido para estado local:', newFilter);
+        
+      setCustomFilters(prev => [newFilter, ...prev]);
+      
+      toast({
+        title: "Filtro salvo",
+        description: `O filtro "${filter.name}" foi salvo com sucesso.`
+      });
     } catch (error) {
       console.error('Error saving filter:', error);
       toast({
