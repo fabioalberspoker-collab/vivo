@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CustomFilter } from '@/components/CreateFilterModal';
@@ -8,12 +8,7 @@ export const useCustomFilters = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Load filters from Supabase on component mount
-  useEffect(() => {
-    loadFilters();
-  }, []);
-
-  const loadFilters = async () => {
+  const loadFilters = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -56,7 +51,12 @@ export const useCustomFilters = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Load filters from Supabase on component mount
+  useEffect(() => {
+    loadFilters();
+  }, [loadFilters]);
 
   const addFilter = async (filter: CustomFilter) => {
     try {

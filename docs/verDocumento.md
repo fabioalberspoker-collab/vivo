@@ -1,0 +1,1 @@
+Ao clicar no botão de 'olho' na coluna Ações da seção de contratos filtrados, deve-se abrir o contrato em questão em uma nova aba do navegador. A URL do contrato pode ser encontrada coluna 'documento_url' da coluna 'contracts' da minha tabela.

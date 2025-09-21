@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeForComparison, normalizeFieldValue } from "@/lib/textUtils";
 
 export interface FilterParams {
   flowType: string[];
@@ -105,12 +106,14 @@ export const useContractFilters = () => {
 
       // Aplicar filtro por fornecedor
       if (filterParams.supplierName.trim()) {
-        query = query.ilike('fornecedor', `%${filterParams.supplierName}%`);
+        const normalizedSupplier = normalizeForComparison(filterParams.supplierName);
+        query = query.ilike('fornecedor', `%${normalizedSupplier}%`);
       }
 
       // Aplicar filtro por número do contrato
       if (filterParams.contractNumber.trim()) {
-        query = query.ilike('numero_contrato', `%${filterParams.contractNumber}%`);
+        const normalizedContractNumber = normalizeForComparison(filterParams.contractNumber);
+        query = query.ilike('numero_contrato', `%${normalizedContractNumber}%`);
       }
 
       // Aplicar filtro por faixa de valor do contrato
@@ -121,12 +124,15 @@ export const useContractFilters = () => {
 
       // Aplicar filtro por região
       if (filterParams.region.trim()) {
-        query = query.eq('regiao', filterParams.region);
+        const normalizedRegion = normalizeForComparison(filterParams.region);
+        query = query.ilike('regiao', `%${normalizedRegion}%`);
       }
 
       // Aplicar filtro por estados
       if (filterParams.selectedStates.length > 0) {
-        query = query.in('estado', filterParams.selectedStates);
+        const normalizedStates = filterParams.selectedStates.map(state => normalizeForComparison(state));
+        const conditions = normalizedStates.map(state => `estado.ilike.%${state}%`);
+        query = query.or(conditions.join(','));
       }
 
       // Aplicar filtro por data de vencimento
@@ -173,19 +179,42 @@ export const useContractFilters = () => {
           const filterValue = filterParams.customFilterValues[filter.id];
           
           if (filterValue !== undefined && filterValue !== null && filterValue !== '') {
+            // Normalizar valor para campos específicos que precisam de padronização
+            const shouldNormalize = ['risco', 'prioridade', 'area_responsavel'].includes(filter.field);
+            
             // Aplicar filtro baseado no tipo
             switch (filter.type) {
               case 'Dropdown': {
                 if (Array.isArray(filterValue) && filterValue.length > 0) {
-                  query = query.in(filter.field, filterValue);
+                  if (shouldNormalize) {
+                    // Para campos com acentos, criar condições OR com ilike para cada valor
+                    const conditions = filterValue.map(val => {
+                      const normalizedValue = normalizeForComparison(val);
+                      return `${filter.field}.ilike.%${normalizedValue}%`;
+                    });
+                    query = query.or(conditions.join(','));
+                  } else {
+                    query = query.in(filter.field, filterValue);
+                  }
                 } else if (typeof filterValue === 'string' && filterValue.trim()) {
-                  query = query.eq(filter.field, filterValue);
+                  if (shouldNormalize) {
+                    // Para campos com acentos, usar busca case-insensitive
+                    const normalizedValue = normalizeForComparison(filterValue);
+                    query = query.ilike(filter.field, `%${normalizedValue}%`);
+                  } else {
+                    query = query.eq(filter.field, filterValue);
+                  }
                 }
                 break;
               }
               case 'Input': {
                 if (typeof filterValue === 'string' && filterValue.trim()) {
-                  query = query.ilike(filter.field, `%${filterValue}%`);
+                  if (shouldNormalize) {
+                    const normalizedValue = normalizeForComparison(filterValue);
+                    query = query.ilike(filter.field, `%${normalizedValue}%`);
+                  } else {
+                    query = query.ilike(filter.field, `%${filterValue}%`);
+                  }
                 }
                 break;
               }
@@ -209,9 +238,14 @@ export const useContractFilters = () => {
                 break;
               }
               default:
-                // Para tipos não reconhecidos, tentar uma busca de igualdade
+                // Para tipos não reconhecidos, tentar uma busca de igualdade com normalização se necessário
                 if (typeof filterValue === 'string' && filterValue.trim()) {
-                  query = query.eq(filter.field, filterValue);
+                  if (shouldNormalize) {
+                    const normalizedValue = normalizeForComparison(filterValue);
+                    query = query.ilike(filter.field, `%${normalizedValue}%`);
+                  } else {
+                    query = query.eq(filter.field, filterValue);
+                  }
                 }
                 break;
             }

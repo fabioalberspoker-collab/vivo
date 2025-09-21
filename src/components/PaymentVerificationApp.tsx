@@ -16,7 +16,7 @@ import ContractsTable from "./ContractsTable";
 import CreateFilterModal from "./CreateFilterModal";
 import CustomFilterRenderer from "./CustomFilterRenderer";
 import { useCustomFilters } from "@/hooks/useCustomFilters";
-import { useContractFilters } from "@/hooks/useContractFilters";
+import { useContractFilters, ContractFromDB } from "@/hooks/useContractFilters";
 
 const PaymentVerificationApp = () => {
   const { toast } = useToast();
@@ -69,11 +69,28 @@ const PaymentVerificationApp = () => {
     await applyFilters(filterParams);
   };
 
-  const handleViewContract = (contractId: string) => {
-    toast({
-      title: "Visualizar Contrato",
-      description: `Abrindo detalhes do contrato ${contractId}...`
-    });
+  const handleViewContract = (contract: ContractFromDB) => {
+    try {
+      // Criar um elemento <a> temporário para abrir em nova aba
+      const link = document.createElement('a');
+      link.href = contract.documento_url || '#';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Documento Aberto",
+        description: `Abrindo documento do contrato ${contract.numero_contrato} em nova aba...`
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao abrir documento",
+        description: "Não foi possível abrir o documento. Verifique se a URL está válida.",
+        variant: "destructive"
+      });
+    }
   };
 
   const resetFilters = () => {

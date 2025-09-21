@@ -14,7 +14,7 @@ import { ContractFromDB } from "@/hooks/useContractFilters";
 
 interface ContractsTableProps {
   contracts: ContractFromDB[];
-  onViewContract: (contractNumber: string) => void;
+  onViewContract: (contract: ContractFromDB) => void;
 }
 
 const ContractsTable = ({ contracts, onViewContract }: ContractsTableProps) => {
@@ -108,8 +108,9 @@ const ContractsTable = ({ contracts, onViewContract }: ContractsTableProps) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onViewContract(contract.numero_contrato)}
-                    className="h-8 w-8 p-0"
+                    onClick={() => onViewContract(contract)}
+                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                    title="Clique para abrir o documento"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
