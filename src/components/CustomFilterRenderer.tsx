@@ -23,7 +23,6 @@ const CustomFilterRenderer = ({ filter, value, onChange }: CustomFilterRendererP
           />
         );
 
-      case 'Select':
       case 'Dropdown':
         return (
           <Select value={(value as string) || ''} onValueChange={onChange}>

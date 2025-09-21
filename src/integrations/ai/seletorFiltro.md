@@ -21,7 +21,7 @@ Receba uma amostra de dados da coluna '${column}' da tabela '${table}' e sugira:
 - 'data_pagamento' → **filtro de intervalo de datas com seletor de calendário (date picker duplo)**
 - 'area_responsavel' → dropdown, opções padrão: [Engenharia, Jurídico, Compras, Financeiro]
 - 'prioridade' → dropdown, opções padrão: [Baixa, Média, Alta]
-- 'risco' → dropdown, opções padrão: [Baixo, Médio, Alto]
+- 'risco' → dropdown, opções padrão: [Baixo, Médio, Alto, Altíssimo]
 - 'responsavel' → input texto
 - 'tipo_contrato' → dropdown, opções padrão: [Segurança, Telecomunicações, Manutenção, Infraestrutura, Serviços, Instalação]
 

@@ -175,7 +175,7 @@ export const useContractFilters = () => {
           if (filterValue !== undefined && filterValue !== null && filterValue !== '') {
             // Aplicar filtro baseado no tipo
             switch (filter.type) {
-              case 'Select': {
+              case 'Dropdown': {
                 if (Array.isArray(filterValue) && filterValue.length > 0) {
                   query = query.in(filter.field, filterValue);
                 } else if (typeof filterValue === 'string' && filterValue.trim()) {

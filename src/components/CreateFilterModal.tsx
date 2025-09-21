@@ -22,7 +22,7 @@ interface CreateFilterModalProps {
 export interface CustomFilter {
   id: string;
   name: string;
-  type: 'Range' | 'Dropdown' | 'Select' | 'Multi-select' | 'Input' | 'Checkbox' | 'Data' | 'Intervalo' | 'Date' | 'Number';
+  type: 'Range' | 'Dropdown' | 'Multi-select' | 'Input' | 'Checkbox' | 'Data' | 'Intervalo' | 'Date' | 'Number';
   table: string;
   field: string;
   options?: string[];
@@ -158,7 +158,7 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
           case 'dropdown':
           case 'categorical':
           case 'enum':
-            frontendType = 'Select';
+            frontendType = 'Dropdown';
             break;
           case 'boolean':
           case 'bool':
