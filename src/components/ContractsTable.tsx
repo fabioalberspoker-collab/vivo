@@ -30,15 +30,32 @@ const ContractsTable = ({ contracts, onViewContract }: ContractsTableProps) => {
   };
 
   const getStatusBadge = (status: string) => {
+    // Log para debug - verificar status reais
+    console.log("🔍 Status encontrado:", `"${status}"`);
+    
+    // Normalizar o status removendo espaços extras e convertendo para minúsculas
+    const normalizedStatus = status?.trim().toLowerCase();
+    
     const statusConfig: Record<string, { label: string; variant: 'default' | 'destructive' | 'secondary' | 'outline'; className: string }> = {
-      'Pago': { label: 'Pago', variant: 'default', className: 'bg-green-500 text-white' },
-      'Pendente': { label: 'Pendente', variant: 'default', className: 'bg-yellow-500 text-white' },
-      'Vencido': { label: 'Vencido', variant: 'destructive', className: 'bg-red-500 text-white' },
-      'Processando': { label: 'Processando', variant: 'default', className: 'bg-blue-500 text-white' },
-      'Em Análise': { label: 'Em Análise', variant: 'secondary', className: 'bg-gray-500 text-white' }
+      // Status existentes com cores personalizadas (case-insensitive)
+      'pendente': { label: 'Pendente', variant: 'default', className: 'bg-yellow-500 text-white' },
+      'rejeitado': { label: 'Rejeitado', variant: 'destructive', className: 'bg-red-500 text-white' },
+      'aprovado em massa': { label: 'Aprovado em Massa', variant: 'default', className: 'bg-green-500 text-white' },
+      'aprovado com análise': { label: 'Aprovado com Análise', variant: 'default', className: 'bg-green-600 text-white' },
+      'aprovado com analise': { label: 'Aprovado com Análise', variant: 'default', className: 'bg-green-600 text-white' },
+      'aprovado': { label: 'Aprovado', variant: 'default', className: 'bg-green-500 text-white' },
+      
+      // Status padrões mantidos
+      'pago': { label: 'Pago', variant: 'default', className: 'bg-blue-500 text-white' },
+      'vencido': { label: 'Vencido', variant: 'destructive', className: 'bg-red-600 text-white' },
+      'processando': { label: 'Processando', variant: 'default', className: 'bg-purple-500 text-white' },
+      'em análise': { label: 'Em Análise', variant: 'secondary', className: 'bg-gray-500 text-white' },
+      'em analise': { label: 'Em Análise', variant: 'secondary', className: 'bg-gray-500 text-white' },
+      'cancelado': { label: 'Cancelado', variant: 'secondary', className: 'bg-gray-600 text-white' },
+      'suspenso': { label: 'Suspenso', variant: 'default', className: 'bg-orange-500 text-white' }
     };
 
-    const config = statusConfig[status] || { label: status, variant: 'outline' as const, className: 'bg-gray-200 text-gray-800' };
+    const config = statusConfig[normalizedStatus] || { label: status, variant: 'outline' as const, className: 'bg-gray-200 text-gray-800' };
     return (
       <Badge variant={config.variant} className={config.className}>
         {config.label}
