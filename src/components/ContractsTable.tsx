@@ -30,9 +30,6 @@ const ContractsTable = ({ contracts, onViewContract }: ContractsTableProps) => {
   };
 
   const getStatusBadge = (status: string) => {
-    // Log para debug - verificar status reais
-    console.log("🔍 Status encontrado:", `"${status}"`);
-    
     // Normalizar o status removendo espaços extras e convertendo para minúsculas
     const normalizedStatus = status?.trim().toLowerCase();
     

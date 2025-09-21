@@ -49,8 +49,6 @@ export const useContractFilters = () => {
     const loadInitialContracts = async () => {
       setIsLoading(true);
       try {
-        console.log("🔄 [SUPABASE] Carregando contratos iniciais da tabela 'contracts'...");
-        
         const { data, error } = await supabase
           .from('contracts')
           .select('*')
@@ -69,10 +67,7 @@ export const useContractFilters = () => {
 
         if (data && data.length > 0) {
           setContracts(data as ContractFromDB[]);
-          console.log("✅ [SUPABASE] Contratos carregados da tabela 'contracts':", data.length);
-          console.log("📊 [SUPABASE] Estrutura do primeiro contrato:", data[0]);
         } else {
-          console.log("⚠️ [SUPABASE] Nenhum contrato encontrado na tabela 'contracts'");
           setContracts([]);
           toast({
             title: "Nenhum contrato encontrado",
@@ -99,9 +94,6 @@ export const useContractFilters = () => {
   const applyFilters = async (filterParams: FilterParams) => {
     setIsLoading(true);
     
-    console.log("🔍 [SUPABASE] Iniciando aplicação de filtros na tabela 'contracts'...");
-    console.log("🔍 [SUPABASE] Parâmetros:", filterParams);
-    
     try {
       // Construir query do Supabase com filtros
       let query = supabase.from('contracts').select('*');
@@ -109,38 +101,32 @@ export const useContractFilters = () => {
       // Aplicar filtro por tipo de fluxo
       if (filterParams.flowType.length > 0) {
         query = query.in('tipo_fluxo', filterParams.flowType);
-        console.log("🔍 [SUPABASE] Filtro tipo_fluxo aplicado:", filterParams.flowType);
       }
 
       // Aplicar filtro por fornecedor
       if (filterParams.supplierName.trim()) {
         query = query.ilike('fornecedor', `%${filterParams.supplierName}%`);
-        console.log("🔍 [SUPABASE] Filtro fornecedor aplicado:", filterParams.supplierName);
       }
 
       // Aplicar filtro por número do contrato
       if (filterParams.contractNumber.trim()) {
         query = query.ilike('numero_contrato', `%${filterParams.contractNumber}%`);
-        console.log("🔍 [SUPABASE] Filtro numero_contrato aplicado:", filterParams.contractNumber);
       }
 
       // Aplicar filtro por faixa de valor do contrato
       if (filterParams.contractValue[0] > 0 || filterParams.contractValue[1] < 10000000) {
         query = query.gte('valor_contrato', filterParams.contractValue[0])
                    .lte('valor_contrato', filterParams.contractValue[1]);
-        console.log("🔍 [SUPABASE] Filtro valor_contrato aplicado:", filterParams.contractValue);
       }
 
       // Aplicar filtro por região
       if (filterParams.region.trim()) {
         query = query.eq('regiao', filterParams.region);
-        console.log("🔍 [SUPABASE] Filtro regiao aplicado:", filterParams.region);
       }
 
       // Aplicar filtro por estados
       if (filterParams.selectedStates.length > 0) {
         query = query.in('estado', filterParams.selectedStates);
-        console.log("🔍 [SUPABASE] Filtro estado aplicado:", filterParams.selectedStates);
       }
 
       // Aplicar filtro por data de vencimento
@@ -170,22 +156,17 @@ export const useContractFilters = () => {
             break;
           }
         }
-        console.log("🔍 [SUPABASE] Filtro data_vencimento aplicado:", filterParams.dueDate);
       }
 
       // Aplicar limite
       query = query.limit(filterParams.contractCount);
-      console.log("🔍 [SUPABASE] Limite aplicado:", filterParams.contractCount);
 
-      console.log("🔍 [SUPABASE] Executando query na tabela 'contracts'...");
       const { data, error } = await query;
 
       if (error) {
         console.error("❌ [SUPABASE] Erro na query da tabela 'contracts':", error);
         throw error;
       }
-
-      console.log("✅ [SUPABASE] Dados recebidos da tabela 'contracts':", data?.length || 0, "registros");
 
       if (!data || data.length === 0) {
         setContracts([]);

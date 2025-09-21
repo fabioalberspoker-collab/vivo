@@ -16,9 +16,9 @@ Receba uma amostra de dados da coluna '${column}' da tabela '${table}' e sugira:
 - 'data_vencimento' → intervalo de duas datas
 - 'numero_contrato' → input texto (formato válido: "CT-YYYY-NNN")
 - 'fornecedor' → input texto
-- 'status' → dropdown, opções padrão: [Processando, Pago, Vencido, Pendente]
-- 'data_assinatura' → intervalo de duas datas
-- 'data_pagamento' → intervalo de duas datas
+- 'status' → dropdown, opções padrão: [Pendente, Reijeitado, Aprovado em massa, Apovado com análise]
+- 'data_assinatura' → **filtro de intervalo de datas com seletor de calendário (date picker duplo)**
+- 'data_pagamento' → **filtro de intervalo de datas com seletor de calendário (date picker duplo)**
 - 'area_responsavel' → dropdown, opções padrão: [Engenharia, Jurídico, Compras, Financeiro]
 - 'prioridade' → dropdown, opções padrão: [Baixa, Média, Alta]
 - 'risco' → dropdown, opções padrão: [Baixo, Médio, Alto]
@@ -43,8 +43,9 @@ Receba uma amostra de dados da coluna '${column}' da tabela '${table}' e sugira:
 4. **Para colunas categóricas novas ou fora do padrão:**  
    - Inferir dinamicamente o filtro (Dropdown/Multi-select), respeitando os valores únicos encontrados.
 
-5. **Para datas:**  
-   - Range = [data mínima, data máxima encontradas na amostra].
+5. **Para datas:**
+   - Sempre usar **seletor de intervalo de datas (date picker duplo)**, permitindo escolher uma data inicial e uma data final no calendário.
+   - O range deve ser definido entre a **data mínima e a data máxima encontradas na amostra**.
 
 ## Output
 Responda **sempre apenas em JSON válido** no formato:

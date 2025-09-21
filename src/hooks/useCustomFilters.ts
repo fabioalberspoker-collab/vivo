@@ -44,7 +44,6 @@ export const useCustomFilters = () => {
             [] : []
         }));
         
-        console.log('📥 [SUPABASE] Filtros carregados do banco:', transformedFilters);
         setCustomFilters(transformedFilters);
       }
     } catch (error) {
@@ -63,8 +62,6 @@ export const useCustomFilters = () => {
     try {
       setIsLoading(true);
       
-      console.log('💾 [SUPABASE] Salvando filtro no banco:', filter);
-      
       const dataToInsert = {
         nome_filtro: filter.name,
         tipo: filter.type,
@@ -77,8 +74,6 @@ export const useCustomFilters = () => {
           ...(filter.options && filter.options.length > 0 && { opcoes: filter.options })
         }
       };
-      
-      console.log('💾 [SUPABASE] Dados a serem inseridos:', dataToInsert);
       
       const { data, error } = await supabase
         .from('filtros_personalizados')
@@ -101,8 +96,6 @@ export const useCustomFilters = () => {
         return;
       }
 
-      console.log('✅ [SUPABASE] Filtro salvo com sucesso:', data);
-
       // Add the new filter to the local state
       const newFilter: CustomFilter = {
         id: data.id,
@@ -115,8 +108,6 @@ export const useCustomFilters = () => {
           (data.configuracoes as Record<string, unknown>).opcoes as string[] || 
           [] : []
       };
-      
-      console.log('✅ [SUPABASE] Filtro convertido para estado local:', newFilter);
         
       setCustomFilters(prev => [newFilter, ...prev]);
       
