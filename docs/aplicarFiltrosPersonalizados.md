@@ -1,0 +1,2 @@
+Quando crio filtros personalizados, eles estão sendo criados mas quando aplico esses filtros, eles não estão retornando o conteúdo que eu esperava. Por exemplo se crio um filtro relacionado com a tabela status e desejo filtrar por status de Pendente, ele não está buscando contratos com esse status na minha tabela contracts.
+Pode verificar essa situação e ajustar para que qualquer tipo de filtro personalizado que o usuário criar vai interagir com a tabela 'contracts' e retornar corretamente o resultado dessa filtragem.

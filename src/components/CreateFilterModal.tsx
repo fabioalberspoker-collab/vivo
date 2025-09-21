@@ -22,7 +22,7 @@ interface CreateFilterModalProps {
 export interface CustomFilter {
   id: string;
   name: string;
-  type: 'Range' | 'Dropdown' | 'Multi-select' | 'Input' | 'Checkbox' | 'Data' | 'Intervalo';
+  type: 'Range' | 'Dropdown' | 'Select' | 'Multi-select' | 'Input' | 'Checkbox' | 'Data' | 'Intervalo' | 'Date' | 'Number';
   table: string;
   field: string;
   options?: string[];
@@ -131,7 +131,7 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
       if (onSave) {
         // Convert the backend response to the expected frontend format
         const backendType = result.filter.type;
-        let frontendType: 'Range' | 'Dropdown' | 'Multi-select' | 'Input' | 'Checkbox' | 'Data' | 'Intervalo';
+        let frontendType: 'Range' | 'Dropdown' | 'Select' | 'Multi-select' | 'Input' | 'Checkbox' | 'Data' | 'Intervalo' | 'Date' | 'Number';
         
         // Mapeamento detalhado com logs
         console.log('🔄 [MAPPING] Convertendo tipo do backend para frontend:');
@@ -158,7 +158,7 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
           case 'dropdown':
           case 'categorical':
           case 'enum':
-            frontendType = 'Dropdown';
+            frontendType = 'Select';
             break;
           case 'boolean':
           case 'bool':

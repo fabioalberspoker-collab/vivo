@@ -7,8 +7,8 @@ import { Slider } from "@/components/ui/slider";
 
 interface CustomFilterRendererProps {
   filter: CustomFilter;
-  value: any;
-  onChange: (value: any) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
 }
 
 const CustomFilterRenderer = ({ filter, value, onChange }: CustomFilterRendererProps) => {
@@ -17,15 +17,16 @@ const CustomFilterRenderer = ({ filter, value, onChange }: CustomFilterRendererP
       case 'Input':
         return (
           <Input
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Digite ${filter.name.toLowerCase()}`}
           />
         );
 
+      case 'Select':
       case 'Dropdown':
         return (
-          <Select value={value || ''} onValueChange={onChange}>
+          <Select value={(value as string) || ''} onValueChange={onChange}>
             <SelectTrigger>
               <SelectValue placeholder={`Selecione ${filter.name.toLowerCase()}`} />
             </SelectTrigger>
@@ -39,8 +40,8 @@ const CustomFilterRenderer = ({ filter, value, onChange }: CustomFilterRendererP
           </Select>
         );
 
-      case 'Multi-select':
-        const selectedValues = value || [];
+      case 'Multi-select': {
+        const selectedValues = (value as string[]) || [];
         return (
           <div className="space-y-2 max-h-32 overflow-y-auto">
             {filter.options?.map((option) => (
@@ -63,29 +64,42 @@ const CustomFilterRenderer = ({ filter, value, onChange }: CustomFilterRendererP
             ))}
           </div>
         );
+      }
 
       case 'Checkbox':
         return (
           <div className="flex items-center space-x-2">
             <Checkbox
               id={filter.id}
-              checked={!!value}
+              checked={!!(value as boolean)}
               onCheckedChange={onChange}
             />
             <Label htmlFor={filter.id}>Ativo</Label>
           </div>
         );
 
+      case 'Date':
       case 'Data':
         return (
           <Input
             type="date"
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
           />
         );
 
-      case 'Intervalo':
+      case 'Number':
+        return (
+          <Input
+            type="number"
+            value={(value as number) || ''}
+            onChange={(e) => onChange(Number(e.target.value))}
+            placeholder={`Digite ${filter.name.toLowerCase()}`}
+          />
+        );
+
+      case 'Intervalo': {
+        const intervalValue = (value as { start?: string; end?: string }) || {};
         return (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
@@ -93,24 +107,25 @@ const CustomFilterRenderer = ({ filter, value, onChange }: CustomFilterRendererP
                 <Label className="text-xs">Data inicial</Label>
                 <Input
                   type="date"
-                  value={value?.start || ''}
-                  onChange={(e) => onChange({ ...value, start: e.target.value })}
+                  value={intervalValue.start || ''}
+                  onChange={(e) => onChange({ ...intervalValue, start: e.target.value })}
                 />
               </div>
               <div>
                 <Label className="text-xs">Data final</Label>
                 <Input
                   type="date"
-                  value={value?.end || ''}
-                  onChange={(e) => onChange({ ...value, end: e.target.value })}
+                  value={intervalValue.end || ''}
+                  onChange={(e) => onChange({ ...intervalValue, end: e.target.value })}
                 />
               </div>
             </div>
           </div>
         );
+      }
 
-      case 'Range':
-        const rangeValue = value || [0, 1000000];
+      case 'Range': {
+        const rangeValue = (value as number[]) || [0, 1000000];
         return (
           <div className="space-y-3">
             <Slider
@@ -127,11 +142,12 @@ const CustomFilterRenderer = ({ filter, value, onChange }: CustomFilterRendererP
             </div>
           </div>
         );
+      }
 
       default:
         return (
           <Input
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Valor do filtro"
           />

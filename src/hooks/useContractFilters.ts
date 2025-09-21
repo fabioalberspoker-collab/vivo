@@ -158,6 +158,67 @@ export const useContractFilters = () => {
         }
       }
 
+      // Aplicar filtros personalizados
+      if (filterParams.customFilters && filterParams.customFilterValues) {
+        const customFilters = filterParams.customFilters as Array<{
+          id: string;
+          name: string;
+          type: string;
+          table: string;
+          field: string;
+          options?: string[];
+        }>;
+
+        customFilters.forEach((filter) => {
+          const filterValue = filterParams.customFilterValues[filter.id];
+          
+          if (filterValue !== undefined && filterValue !== null && filterValue !== '') {
+            // Aplicar filtro baseado no tipo
+            switch (filter.type) {
+              case 'Select': {
+                if (Array.isArray(filterValue) && filterValue.length > 0) {
+                  query = query.in(filter.field, filterValue);
+                } else if (typeof filterValue === 'string' && filterValue.trim()) {
+                  query = query.eq(filter.field, filterValue);
+                }
+                break;
+              }
+              case 'Input': {
+                if (typeof filterValue === 'string' && filterValue.trim()) {
+                  query = query.ilike(filter.field, `%${filterValue}%`);
+                }
+                break;
+              }
+              case 'Date': {
+                if (typeof filterValue === 'string' && filterValue.trim()) {
+                  query = query.eq(filter.field, filterValue);
+                }
+                break;
+              }
+              case 'Number': {
+                if (typeof filterValue === 'number' || (typeof filterValue === 'string' && !isNaN(Number(filterValue)))) {
+                  query = query.eq(filter.field, Number(filterValue));
+                }
+                break;
+              }
+              case 'Range': {
+                if (Array.isArray(filterValue) && filterValue.length === 2) {
+                  const [min, max] = filterValue;
+                  query = query.gte(filter.field, min).lte(filter.field, max);
+                }
+                break;
+              }
+              default:
+                // Para tipos não reconhecidos, tentar uma busca de igualdade
+                if (typeof filterValue === 'string' && filterValue.trim()) {
+                  query = query.eq(filter.field, filterValue);
+                }
+                break;
+            }
+          }
+        });
+      }
+
       // Aplicar limite
       query = query.limit(filterParams.contractCount);
 
