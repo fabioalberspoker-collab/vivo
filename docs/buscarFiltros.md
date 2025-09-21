@@ -1,1 +1,2 @@
 O botão Aplicar Filtros não está funcionando corretamente. Ele deve aplicar os filtros selecionados pelo usuário sobre a tabela contracts. Pode deixar esse botão funcionando corretamente.
+E os contratos mostrados na seção de contratos mostrados também devem ser puxados dessa tabela contracts de acordo com os filtros selecionados pelo usuário

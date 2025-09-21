@@ -16,7 +16,7 @@ import ContractsTable from "./ContractsTable";
 import CreateFilterModal from "./CreateFilterModal";
 import CustomFilterRenderer from "./CustomFilterRenderer";
 import { useCustomFilters } from "@/hooks/useCustomFilters";
-import { useContractFilters, Contract } from "@/hooks/useContractFilters";
+import { useContractFilters } from "@/hooks/useContractFilters";
 
 const PaymentVerificationApp = () => {
   const { toast } = useToast();
@@ -37,12 +37,12 @@ const PaymentVerificationApp = () => {
   const [contractCount, setContractCount] = useState<number>(10);
   
   // Custom filter values
-  const [customFilterValues, setCustomFilterValues] = useState<Record<string, any>>({});
+  const [customFilterValues, setCustomFilterValues] = useState<Record<string, unknown>>({});
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleCustomFilterChange = (filterId: string, value: any) => {
+  const handleCustomFilterChange = (filterId: string, value: unknown) => {
     setCustomFilterValues(prev => ({
       ...prev,
       [filterId]: value
