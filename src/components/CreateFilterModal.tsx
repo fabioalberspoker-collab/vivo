@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getSupabaseTableNames, getSupabaseTableFields } from "@/integrations/supabase/listTables";
+import { getApiEndpoint } from "@/config/api";
 import {
   Dialog,
   DialogContent,
@@ -60,36 +61,27 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
     setIsSubmitting(true);
     try {
     // Chama a API backend para criar o filtro automaticamente
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = getApiEndpoint('CREATE_CUSTOM_FILTER');
       
-      console.log('🌍 [DEBUG] Variável de ambiente VITE_API_URL:', import.meta.env.VITE_API_URL);
-      console.log('🌍 [DEBUG] API URL final:', apiUrl);
+      console.log('🌍 [DEBUG] URL da API:', apiUrl);
       
       const requestBody = {
-        name: formData.name,
-        description: `Filter for ${formData.table}.${formData.field}`,
-        columnName: formData.field
+        nome_do_filtro: formData.name,
+        tabela: formData.table,
+        coluna: formData.field
       };
       
       console.log('🔍 [DEBUG] Enviando dados para o backend:', requestBody);
-      console.log('🌐 [DEBUG] URL da API:', `${apiUrl}/api/createCustomFilter`);
       
       // Log do prompt que será enviado para o Gemini
-      const expectedPrompt = `Given a column name "${requestBody.columnName}" and its description "${requestBody.description}" from a contracts database,
-    determine the most appropriate filter type. The filter type should be one of: 
-    - "value-range" for numerical ranges
-    - "date" for date fields
-    - "text" for text search
-    - "select" for categorical/enum fields
-    - "boolean" for true/false fields
-    Respond only with the filter type, no explanation.`;
+      const expectedPrompt = `Analisando campo "${requestBody.coluna}" da tabela "${requestBody.tabela}" para criar filtro inteligente...`;
       
-      console.log('🤖 [PROMPT] Prompt que será enviado para o Gemini:');
+      console.log('🤖 [PROMPT] Dados que serão enviados para o Gemini:');
       console.log('==========================================');
       console.log(expectedPrompt);
       console.log('==========================================');
       
-    const response = await fetch(`${apiUrl}/api/createCustomFilter`, {
+    const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
@@ -227,8 +219,8 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
   const testApiConnection = async () => {
     console.log('🧪 [TEST] Testando conexão com a API...');
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      const response = await fetch(`${apiUrl}/api/health`);
+      const apiUrl = getApiEndpoint('HEALTH');
+      const response = await fetch(apiUrl);
       const result = await response.json();
       console.log('🧪 [TEST] Resultado do teste:', result);
       toast({
