@@ -154,6 +154,11 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
           case 'time':
             frontendType = 'Data';
             break;
+          case 'intervalo':
+          case 'interval':
+          case 'date-range':
+            frontendType = 'Intervalo';
+            break;
           case 'select':
           case 'dropdown':
           case 'categorical':
