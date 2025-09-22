@@ -7,7 +7,8 @@ const FILTER_TYPES = [
   'flowType',
   'dueDate',
   'valueRange',
-  'contractCount'
+  'contractCount',
+  'status'
 ] as const;
 
 // Mapeamento de palavras-chave para tipos de filtro
@@ -56,7 +57,18 @@ const KEYWORD_MAPPING = {
   'count': 'contractCount',
   'número': 'contractCount',
   'total': 'contractCount',
-  'contratos': 'contractCount'
+  'contratos': 'contractCount',
+  
+  // Status do contrato
+  'status': 'status',
+  'situação': 'status',
+  'condição': 'status',
+  'pendente': 'status',
+  'aprovado': 'status',
+  'rejeitado': 'status',
+  'análise': 'status',
+  'massa': 'status',
+  'workflow': 'status'
 };
 
 // Opções para cada tipo de filtro
@@ -66,15 +78,20 @@ const FILTER_OPTIONS = {
   flowType: ['Entrada', 'Saída', 'Transferência', 'Cancelamento'],
   dueDate: ['overdue', 'next7days', 'next30days', '30-60', '60-90', 'custom'],
   valueRange: ['0-10000', '10000-50000', '50000-100000', '100000+'],
-  contractCount: ['1-10', '11-50', '51-100', '100+']
+  contractCount: ['1-10', '11-50', '51-100', '100+'],
+  status: ['Pendente', 'Rejeitado', 'Aprovado em massa', 'Aprovado com análise']
 };
 
 /**
  * Analisa o prompt do usuário e determina o tipo de filtro mais adequado
  */
 function analyzePrompt(prompt: string): { filterType: string; filterValue: string; confidence: number } {
+  console.log('🤖 [ANALYZE] Prompt recebido:', prompt);
+  
   const lowerPrompt = prompt.toLowerCase();
   const words = lowerPrompt.split(/\s+/);
+  
+  console.log('🤖 [ANALYZE] Palavras extraídas:', words);
   
   const scores: Record<string, number> = {};
   
@@ -83,6 +100,7 @@ function analyzePrompt(prompt: string): { filterType: string; filterValue: strin
     for (const [keyword, filterType] of Object.entries(KEYWORD_MAPPING)) {
       if (word.includes(keyword) || keyword.includes(word)) {
         scores[filterType] = (scores[filterType] || 0) + 1;
+        console.log(`🤖 [ANALYZE] Match: "${word}" → "${keyword}" → ${filterType} (score: ${scores[filterType]})`);
       }
     }
   }
@@ -90,18 +108,30 @@ function analyzePrompt(prompt: string): { filterType: string; filterValue: strin
   // Análise contextual adicional
   if (lowerPrompt.includes('atrasado') || lowerPrompt.includes('venceu')) {
     scores.dueDate = (scores.dueDate || 0) + 2;
+    console.log('🤖 [ANALYZE] Bonus dueDate por contexto de atraso');
+  }
+  
+  // Análise específica para status
+  if (lowerPrompt.includes('pendente') || lowerPrompt.includes('aprovado') || lowerPrompt.includes('rejeitado') || lowerPrompt.includes('análise') || lowerPrompt.includes('massa')) {
+    scores.status = (scores.status || 0) + 3;
+    console.log('🤖 [ANALYZE] Bonus status por palavras específicas');
   }
   
   if (lowerPrompt.match(/\d+/)) {
     scores.valueRange = (scores.valueRange || 0) + 1;
     scores.contractCount = (scores.contractCount || 0) + 1;
+    console.log('🤖 [ANALYZE] Bonus value/count por números encontrados');
   }
+  
+  console.log('🤖 [ANALYZE] Scores finais:', scores);
   
   // Determinar o filtro com maior pontuação
   const bestFilter = Object.entries(scores).reduce((best, [type, score]) => 
     score > best.score ? { type, score } : best, 
     { type: 'supplier', score: 0 }
   );
+  
+  console.log('🤖 [ANALYZE] Melhor filtro detectado:', bestFilter);
   
   const filterType = bestFilter.type;
   const options = FILTER_OPTIONS[filterType as keyof typeof FILTER_OPTIONS];
@@ -127,9 +157,30 @@ function analyzePrompt(prompt: string): { filterType: string; filterValue: strin
       else if (value < 100000) filterValue = '50000-100000';
       else filterValue = '100000+';
     }
+  } else if (filterType === 'status') {
+    if (lowerPrompt.includes('pendente')) {
+      filterValue = 'Pendente';
+    } else if (lowerPrompt.includes('rejeitado')) {
+      filterValue = 'Rejeitado';
+    } else if (lowerPrompt.includes('massa')) {
+      filterValue = 'Aprovado em massa';
+    } else if (lowerPrompt.includes('análise')) {
+      filterValue = 'Aprovado com análise';
+    } else if (lowerPrompt.includes('aprovado')) {
+      // Detecta se é específico ou genérico
+      if (lowerPrompt.includes('análise') || lowerPrompt.includes('manual')) {
+        filterValue = 'Aprovado com análise';
+      } else {
+        filterValue = 'Aprovado em massa';
+      }
+    }
   }
   
+  console.log('🤖 [ANALYZE] Valor final selecionado:', filterValue);
+  
   const confidence = Math.min(bestFilter.score / words.length * 100, 95);
+  
+  console.log('🤖 [ANALYZE] Confiança calculada:', confidence);
   
   return { filterType, filterValue, confidence };
 }
@@ -144,7 +195,8 @@ function generateFilterLabel(filterType: string, filterValue: string, prompt: st
     flowType: 'Tipo de Fluxo',
     dueDate: 'Data de Vencimento',
     valueRange: 'Faixa de Valor',
-    contractCount: 'Quantidade de Contratos'
+    contractCount: 'Quantidade de Contratos',
+    status: 'Status do Contrato'
   };
   
   const valueLabels = {
@@ -185,6 +237,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { prompt } = req.body;
     
+    console.log('🚀 [API] Nova requisição recebida');
+    console.log('🚀 [API] Prompt original:', prompt);
+    console.log('🚀 [API] Tipo do prompt:', typeof prompt);
+    console.log('🚀 [API] Prompt trimmed:', prompt?.trim());
+    
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
       return res.status(400).json({
         error: 'Prompt inválido',
@@ -200,21 +257,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const analysis = analyzePrompt(prompt.trim());
     const filterLabel = generateFilterLabel(analysis.filterType, analysis.filterValue, prompt);
     
-    console.log('🤖 [CREATE FILTER] Resultado:', {
-      filterType: analysis.filterType,
-      filterValue: analysis.filterValue,
-      filterLabel,
-      confidence: analysis.confidence
-    });
-    
-    res.status(200).json({
+    const result = {
       filterType: analysis.filterType,
       filterValue: analysis.filterValue,
       filterLabel,
       confidence: analysis.confidence,
       prompt: prompt.trim(),
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    console.log('✅ [CREATE FILTER] Resultado final:', result);
+    
+    res.status(200).json(result);
     
   } catch (error) {
     console.error('❌ [CREATE FILTER] Erro:', error);

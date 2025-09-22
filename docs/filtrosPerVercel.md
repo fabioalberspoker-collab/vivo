@@ -1,0 +1,2 @@
+A API do gemini não parece estar retornando as configurações dos novos filtros de forma correta quando está no vercel. Por exemplo o filtro de status não retorna as opções de Pendente, Reijeitado, Aprovado em massa, Apovado com análise.
+Pode verificar o que está havendo. Também coloque um log para eu verificar qual o prompt esta sendo enviado para a API quando crio um novo filtro na vercel.
