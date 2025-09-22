@@ -57,7 +57,7 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
 
   const getMockOptions = (fieldName: string): string[] | undefined => {
     const field = fieldName.toLowerCase();
-    if (field.includes('status')) return ['Pendente', 'Aprovado', 'Rejeitado', 'Em Análise'];
+    if (field.includes('status')) return ['Pendente', 'Rejeitado', 'Aprovado em massa', 'Aprovado com análise'];
     if (field.includes('prioridade')) return ['Baixa', 'Média', 'Alta'];
     if (field.includes('tipo')) return ['Infraestrutura', 'Serviços', 'Equipamentos', 'Software'];
     if (field.includes('regiao')) return ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];

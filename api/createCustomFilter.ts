@@ -8,7 +8,11 @@ const FILTER_TYPES = [
   'dueDate',
   'valueRange',
   'contractCount',
-  'status'
+  'status',
+  'risco',
+  'prioridade',
+  'areaResponsavel',
+  'tipoContrato'
 ] as const;
 
 // Mapeamento de palavras-chave para tipos de filtro
@@ -68,7 +72,42 @@ const KEYWORD_MAPPING = {
   'rejeitado': 'status',
   'análise': 'status',
   'massa': 'status',
-  'workflow': 'status'
+  'workflow': 'status',
+  
+  // Risco
+  'risco': 'risco',
+  'baixo': 'risco',
+  'médio': 'risco',
+  'alto': 'risco',
+  'altíssimo': 'risco',
+  'risk': 'risco',
+  
+  // Prioridade
+  'prioridade': 'prioridade',
+  'priority': 'prioridade',
+  'baixa': 'prioridade',
+  'média': 'prioridade',
+  'alta': 'prioridade',
+  'urgente': 'prioridade',
+  
+  // Área responsável
+  'área': 'areaResponsavel',
+  'responsável': 'areaResponsavel',
+  'departamento': 'areaResponsavel',
+  'setor': 'areaResponsavel',
+  'engenharia': 'areaResponsavel',
+  'jurídico': 'areaResponsavel',
+  'compras': 'areaResponsavel',
+  'financeiro': 'areaResponsavel',
+  
+  // Tipo de contrato
+  'contrato': 'tipoContrato',
+  'segurança': 'tipoContrato',
+  'telecomunicações': 'tipoContrato',
+  'manutenção': 'tipoContrato',
+  'infraestrutura': 'tipoContrato',
+  'serviços': 'tipoContrato',
+  'instalação': 'tipoContrato'
 };
 
 // Opções para cada tipo de filtro
@@ -79,7 +118,11 @@ const FILTER_OPTIONS = {
   dueDate: ['overdue', 'next7days', 'next30days', '30-60', '60-90', 'custom'],
   valueRange: ['0-10000', '10000-50000', '50000-100000', '100000+'],
   contractCount: ['1-10', '11-50', '51-100', '100+'],
-  status: ['Pendente', 'Rejeitado', 'Aprovado em massa', 'Aprovado com análise']
+  status: ['Pendente', 'Rejeitado', 'Aprovado em massa', 'Aprovado com análise'],
+  risco: ['Baixo', 'Médio', 'Alto', 'Altíssimo'],
+  prioridade: ['Baixa', 'Média', 'Alta', 'Urgente'],
+  areaResponsavel: ['Engenharia', 'Jurídico', 'Compras', 'Financeiro', 'TI', 'Operações'],
+  tipoContrato: ['Segurança', 'Telecomunicações', 'Manutenção', 'Infraestrutura', 'Serviços', 'Instalação']
 };
 
 /**

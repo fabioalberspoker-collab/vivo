@@ -16,7 +16,7 @@ Receba uma amostra de dados da coluna '${column}' da tabela '${table}' e sugira:
 - 'data_vencimento' → intervalo de duas datas
 - 'numero_contrato' → input texto (formato válido: "CT-YYYY-NNN")
 - 'fornecedor' → input texto
-- 'status' → dropdown, opções padrão: [Pendente, Reijeitado, Aprovado em massa, Apovado com análise]
+- 'status' → dropdown, opções padrão: [Pendente, Rejeitado, Aprovado em massa, Aprovado com análise]
 - 'data_assinatura' → **filtro de intervalo de datas com seletor de calendário (date picker duplo)**
 - 'data_pagamento' → **filtro de intervalo de datas com seletor de calendário (date picker duplo)**
 - 'area_responsavel' → dropdown, opções padrão: [Engenharia, Jurídico, Compras, Financeiro]
