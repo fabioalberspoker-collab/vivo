@@ -11,7 +11,11 @@
 
 // URL base da API configurada via variável de ambiente
 // Em produção sem backend, deixar undefined para usar modo mock
-export const API_URL = import.meta.env.VITE_API_URL;
+// Em produção com API própria, usar o domínio atual automaticamente
+export const API_URL = import.meta.env.VITE_API_URL || 
+  (typeof window !== 'undefined' && window.location.origin.includes('vercel.app') 
+    ? window.location.origin 
+    : undefined);
 
 // Endpoints específicos da API
 export const API_ENDPOINTS = {
