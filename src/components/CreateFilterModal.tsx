@@ -45,6 +45,25 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
     console.log('🪟 [DEBUG] Modal CreateFilterModal - isOpen:', isOpen);
   }, [isOpen]);
 
+  // Funções auxiliares para mock (quando não há API)
+  const getMockFilterType = (fieldName: string): CustomFilter['type'] => {
+    const field = fieldName.toLowerCase();
+    if (field.includes('data') || field.includes('date')) return 'Intervalo';
+    if (field.includes('valor') || field.includes('value') || field.includes('preco')) return 'Range';
+    if (field.includes('status') || field.includes('tipo') || field.includes('prioridade')) return 'Dropdown';
+    if (field.includes('nome') || field.includes('numero') || field.includes('descricao')) return 'Input';
+    return 'Input';
+  };
+
+  const getMockOptions = (fieldName: string): string[] | undefined => {
+    const field = fieldName.toLowerCase();
+    if (field.includes('status')) return ['Pendente', 'Aprovado', 'Rejeitado', 'Em Análise'];
+    if (field.includes('prioridade')) return ['Baixa', 'Média', 'Alta'];
+    if (field.includes('tipo')) return ['Infraestrutura', 'Serviços', 'Equipamentos', 'Software'];
+    if (field.includes('regiao')) return ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
+    return undefined;
+  };
+
 
   const handleSave = async () => {
     console.log('💾 [DEBUG] handleSave chamado - formData:', formData);
@@ -60,6 +79,39 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
     }
     setIsSubmitting(true);
     try {
+      // TEMPORÁRIO: Mock para funcionamento sem API
+      if (!import.meta.env.VITE_API_URL) {
+        console.log('🔄 [MOCK] Simulando criação de filtro...');
+        
+        // Simular delay de API
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Criar filtro mock baseado no tipo de campo
+        const mockFilter: CustomFilter = {
+          id: Date.now().toString(),
+          name: formData.name,
+          type: getMockFilterType(formData.field),
+          table: formData.table,
+          field: formData.field,
+          options: getMockOptions(formData.field)
+        };
+
+        console.log('✅ [MOCK] Filtro mock criado:', mockFilter);
+        
+        toast({
+          title: "Filtro criado (modo demo)",
+          description: `Filtro "${formData.name}" criado com sucesso! Tipo: ${mockFilter.type}`,
+        });
+        
+        setFormData({ name: '', table: '', field: '' });
+        onClose();
+        
+        if (onSave) {
+          await onSave(mockFilter);
+        }
+        return;
+      }
+
     // Chama a API backend para criar o filtro automaticamente
       const apiUrl = getApiEndpoint('CREATE_CUSTOM_FILTER');
       
@@ -219,6 +271,17 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
   const testApiConnection = async () => {
     console.log('🧪 [TEST] Testando conexão com a API...');
     try {
+      if (!import.meta.env.VITE_API_URL) {
+        console.log('🔄 [MOCK] Simulando teste de API...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        toast({
+          title: "Teste de API (modo demo)",
+          description: "Modo demonstração - API não configurada",
+        });
+        return;
+      }
+
       const apiUrl = getApiEndpoint('HEALTH');
       const response = await fetch(apiUrl);
       const result = await response.json();

@@ -10,7 +10,8 @@
  */
 
 // URL base da API configurada via variável de ambiente
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Em produção sem backend, deixar undefined para usar modo mock
+export const API_URL = import.meta.env.VITE_API_URL;
 
 // Endpoints específicos da API
 export const API_ENDPOINTS = {
@@ -30,19 +31,21 @@ export const API_ENDPOINTS = {
 /**
  * Função utilitária para construir URLs completas da API
  * @param endpoint - Endpoint da API (ex: '/api/createCustomFilter')
- * @returns URL completa da API
+ * @returns URL completa da API ou undefined se API_URL não estiver configurada
  */
-export function buildApiUrl(endpoint: string): string {
+export function buildApiUrl(endpoint: string): string | undefined {
+  if (!API_URL) return undefined;
   return `${API_URL}${endpoint}`;
 }
 
 /**
  * Função utilitária para construir URLs usando os endpoints predefinidos
  * @param endpointKey - Chave do endpoint no objeto API_ENDPOINTS
- * @returns URL completa da API
+ * @returns URL completa da API ou undefined se API_URL não estiver configurada
  */
-export function getApiEndpoint(endpointKey: keyof typeof API_ENDPOINTS): string {
-  return buildApiUrl(API_ENDPOINTS[endpointKey]);
+export function getApiEndpoint(endpointKey: keyof typeof API_ENDPOINTS): string | undefined {
+  const endpoint = API_ENDPOINTS[endpointKey];
+  return buildApiUrl(endpoint);
 }
 
 // Log de debug para desenvolvimento
