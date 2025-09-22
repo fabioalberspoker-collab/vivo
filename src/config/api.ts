@@ -10,12 +10,10 @@
  */
 
 // URL base da API configurada via variável de ambiente
-// Em produção sem backend, deixar undefined para usar modo mock
-// Em produção com API própria, usar o domínio atual automaticamente
-export const API_URL = import.meta.env.VITE_API_URL || 
-  (typeof window !== 'undefined' && window.location.origin.includes('vercel.app') 
-    ? window.location.origin 
-    : undefined);
+// Se não configurada, será detectada dinamicamente no getApiEndpoint
+export const API_URL = import.meta.env.VITE_API_URL;
+
+console.log('🌐 [API CONFIG] VITE_API_URL:', import.meta.env.VITE_API_URL);
 
 // Endpoints específicos da API
 export const API_ENDPOINTS = {
@@ -49,7 +47,28 @@ export function buildApiUrl(endpoint: string): string | undefined {
  */
 export function getApiEndpoint(endpointKey: keyof typeof API_ENDPOINTS): string | undefined {
   const endpoint = API_ENDPOINTS[endpointKey];
-  return buildApiUrl(endpoint);
+  
+  // Se tiver API_URL configurada, usa ela
+  if (API_URL) {
+    const url = buildApiUrl(endpoint);
+    console.log('🌐 [API CONFIG] Usando API_URL configurada:', url);
+    return url;
+  }
+  
+  // Detecção dinâmica para Vercel usando try/catch para evitar erros de SSR
+  try {
+    const currentOrigin = globalThis?.location?.origin;
+    if (currentOrigin?.includes('vercel.app')) {
+      const url = `${currentOrigin}${endpoint}`;
+      console.log('🌐 [API CONFIG] Auto-detectou Vercel URL:', url);
+      return url;
+    }
+  } catch (e) {
+    // Ignora erros em ambiente de servidor
+  }
+  
+  console.log('🌐 [API CONFIG] Nenhuma API encontrada, usando modo mock');
+  return undefined;
 }
 
 // Log de debug para desenvolvimento
