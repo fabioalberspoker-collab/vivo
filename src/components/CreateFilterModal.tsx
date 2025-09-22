@@ -50,7 +50,9 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
     const field = fieldName.toLowerCase();
     if (field.includes('data') || field.includes('date')) return 'Intervalo';
     if (field.includes('valor') || field.includes('value') || field.includes('preco')) return 'Range';
-    if (field.includes('status') || field.includes('tipo') || field.includes('prioridade')) return 'Dropdown';
+    if (field.includes('status') || field.includes('risco') || field.includes('prioridade') || 
+        field.includes('area_responsavel') || field.includes('tipo_contrato') || 
+        (field.includes('tipo') && !field.includes('contrato'))) return 'Dropdown';
     if (field.includes('nome') || field.includes('numero') || field.includes('descricao')) return 'Input';
     return 'Input';
   };
@@ -58,7 +60,10 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
   const getMockOptions = (fieldName: string): string[] | undefined => {
     const field = fieldName.toLowerCase();
     if (field.includes('status')) return ['Pendente', 'Rejeitado', 'Aprovado em massa', 'Aprovado com análise'];
-    if (field.includes('prioridade')) return ['Baixa', 'Média', 'Alta'];
+    if (field.includes('risco')) return ['Baixo', 'Médio', 'Alto', 'Altíssimo'];
+    if (field.includes('prioridade')) return ['Baixa', 'Média', 'Alta', 'Urgente'];
+    if (field.includes('area') && field.includes('responsavel')) return ['Engenharia', 'Jurídico', 'Compras', 'Financeiro', 'TI', 'Operações'];
+    if (field.includes('tipo') && field.includes('contrato')) return ['Segurança', 'Telecomunicações', 'Manutenção', 'Infraestrutura', 'Serviços', 'Instalação'];
     if (field.includes('tipo')) return ['Infraestrutura', 'Serviços', 'Equipamentos', 'Software'];
     if (field.includes('regiao')) return ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
     return undefined;
@@ -180,12 +185,16 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
         // Mapeamento detalhado com logs
         console.log('🔄 [MAPPING] Convertendo tipo do backend para frontend:');
         console.log('🔄 [MAPPING] Tipo do backend:', backendType);
+        console.log('🔄 [MAPPING] Campo selecionado:', formData.field);
+        console.log('🔄 [MAPPING] Tabela selecionada:', formData.table);
         
         switch(backendType.toLowerCase().trim()) {
           case 'value-range':
           case 'range':
           case 'number':
           case 'numeric':
+          case 'valuerange':
+          case 'contractcount':
             frontendType = 'Range';
             break;
           case 'text':
@@ -196,6 +205,7 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
           case 'date':
           case 'datetime':
           case 'time':
+          case 'duedate':
             frontendType = 'Data';
             break;
           case 'intervalo':
@@ -207,6 +217,17 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
           case 'dropdown':
           case 'categorical':
           case 'enum':
+          case 'supplier':
+          case 'location':
+          case 'flowtype':
+          case 'status':
+          case 'risco':
+          case 'prioridade':
+          case 'arearesponsavel':
+          case 'tipocontrato':
+          case 'area_responsavel':
+          case 'tipo_contrato':
+            console.log('🎯 [MAPPING] Detectado tipo categórico específico:', backendType);
             frontendType = 'Dropdown';
             break;
           case 'boolean':
@@ -223,13 +244,32 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
         
         // Extract options from backend config
         let options: string[] = [];
+        
+        // Primeira tentativa: config.opcoes
         if (result.config && result.config.opcoes) {
           options = result.config.opcoes;
-          console.log('📋 [OPTIONS] Opções extraídas do backend:', options);
-        } else if (result.debug && result.debug.aiConfig && result.debug.aiConfig.configuracoes && result.debug.aiConfig.configuracoes.opcoes) {
+          console.log('📋 [OPTIONS] Opções extraídas do backend config.opcoes:', options);
+        } 
+        // Segunda tentativa: debug.aiConfig
+        else if (result.debug && result.debug.aiConfig && result.debug.aiConfig.configuracoes && result.debug.aiConfig.configuracoes.opcoes) {
           options = result.debug.aiConfig.configuracoes.opcoes;
           console.log('📋 [OPTIONS] Opções extraídas do debug AI:', options);
         }
+        // Terceira tentativa: result.options
+        else if (result.options && Array.isArray(result.options)) {
+          options = result.options;
+          console.log('📋 [OPTIONS] Opções extraídas do result.options:', options);
+        }
+        // Fallback: usar opções mock baseadas no campo
+        else if (frontendType === 'Dropdown') {
+          const mockOptions = getMockOptions(formData.field);
+          if (mockOptions) {
+            options = mockOptions;
+            console.log('📋 [OPTIONS] Usando opções mock para campo', formData.field, ':', options);
+          }
+        }
+        
+        console.log('📋 [OPTIONS] Opções finais:', options);
         
         const customFilter: CustomFilter = {
           id: Date.now().toString(), // Generate a temporary ID
