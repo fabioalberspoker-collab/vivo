@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 const predefinedOptions = [
-  { value: "30", label: "Até 30 dias" },
+  { value: "overdue", label: "Vencidos" },
+  { value: "next7days", label: "Próximos 7 dias" },
+  { value: "next30days", label: "Próximos 30 dias" },
   { value: "30-60", label: "30 a 60 dias" },
   { value: "60-90", label: "60 a 90 dias" },
   { value: "custom", label: "Período personalizado" }

@@ -154,6 +154,18 @@ export const useContractFilters = () => {
             query = query.gte('data_vencimento', today).lte('data_vencimento', next30Days);
             break;
           }
+          case '30-60': {
+            const next30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const next60Days = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            query = query.gte('data_vencimento', next30Days).lte('data_vencimento', next60Days);
+            break;
+          }
+          case '60-90': {
+            const next60Days = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const next90Days = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            query = query.gte('data_vencimento', next60Days).lte('data_vencimento', next90Days);
+            break;
+          }
           case 'custom': {
             if (filterParams.customStart && filterParams.customEnd) {
               query = query.gte('data_vencimento', filterParams.customStart)
