@@ -115,7 +115,7 @@ const PaymentVerificationApp = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header filteredContracts={contracts} />
       
       <main className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Filters Grid */}

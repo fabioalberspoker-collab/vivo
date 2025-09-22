@@ -1,6 +1,48 @@
 import { Button } from "@/components/ui/button";
+import { useContractAnalysis } from "@/hooks/useContractAnalysis";
+import { ContractFromDB } from "@/hooks/useContractFilters";
+import { Loader2, Brain } from "lucide-react";
 
-const Header = () => {
+interface HeaderProps {
+  filteredContracts?: ContractFromDB[];
+}
+
+const Header = ({ filteredContracts = [] }: HeaderProps) => {
+  // Usar a chave da API Gemini diretamente
+  const GEMINI_API_KEY = "AIzaSyD918kJyTaAlXtxXrfoBMjdwnxWLk0yqaw";
+  const { analyzeContracts, analysisState } = useContractAnalysis(GEMINI_API_KEY);
+
+  const handleExportReport = async () => {
+    await analyzeContracts(filteredContracts);
+  };
+
+  const getButtonText = () => {
+    if (!analysisState.isAnalyzing) {
+      return (
+        <>
+          <Brain className="mr-2 h-4 w-4" />
+          Exportar Relatório
+        </>
+      );
+    }
+
+    const progress = analysisState.progress;
+    if (!progress) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Preparando...
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        {progress.message} ({progress.progress}%)
+      </>
+    );
+  };
   return (
     <header className="w-full bg-background border-b border-border px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -21,8 +63,14 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" className="text-vivo-purple border-vivo-purple hover:bg-vivo-purple hover:text-white">
-            Exportar Relatório
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-vivo-purple border-vivo-purple hover:bg-vivo-purple hover:text-white"
+            onClick={handleExportReport}
+            disabled={analysisState.isAnalyzing || filteredContracts.length === 0}
+          >
+            {getButtonText()}
           </Button>
           <Button size="sm">
             Configurações
