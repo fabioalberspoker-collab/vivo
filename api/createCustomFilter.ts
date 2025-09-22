@@ -217,6 +217,54 @@ function analyzePrompt(prompt: string): { filterType: string; filterValue: strin
         filterValue = 'Aprovado em massa';
       }
     }
+  } else if (filterType === 'risco') {
+    if (lowerPrompt.includes('baixo')) {
+      filterValue = 'Baixo';
+    } else if (lowerPrompt.includes('médio')) {
+      filterValue = 'Médio';
+    } else if (lowerPrompt.includes('alto') && !lowerPrompt.includes('altíssimo')) {
+      filterValue = 'Alto';
+    } else if (lowerPrompt.includes('altíssimo')) {
+      filterValue = 'Altíssimo';
+    }
+  } else if (filterType === 'prioridade') {
+    if (lowerPrompt.includes('baixa')) {
+      filterValue = 'Baixa';
+    } else if (lowerPrompt.includes('média')) {
+      filterValue = 'Média';
+    } else if (lowerPrompt.includes('alta')) {
+      filterValue = 'Alta';
+    } else if (lowerPrompt.includes('urgente')) {
+      filterValue = 'Urgente';
+    }
+  } else if (filterType === 'areaResponsavel') {
+    if (lowerPrompt.includes('engenharia')) {
+      filterValue = 'Engenharia';
+    } else if (lowerPrompt.includes('jurídico')) {
+      filterValue = 'Jurídico';
+    } else if (lowerPrompt.includes('compras')) {
+      filterValue = 'Compras';
+    } else if (lowerPrompt.includes('financeiro')) {
+      filterValue = 'Financeiro';
+    } else if (lowerPrompt.includes('ti')) {
+      filterValue = 'TI';
+    } else if (lowerPrompt.includes('operações')) {
+      filterValue = 'Operações';
+    }
+  } else if (filterType === 'tipoContrato') {
+    if (lowerPrompt.includes('segurança')) {
+      filterValue = 'Segurança';
+    } else if (lowerPrompt.includes('telecomunicações')) {
+      filterValue = 'Telecomunicações';
+    } else if (lowerPrompt.includes('manutenção')) {
+      filterValue = 'Manutenção';
+    } else if (lowerPrompt.includes('infraestrutura')) {
+      filterValue = 'Infraestrutura';
+    } else if (lowerPrompt.includes('serviços')) {
+      filterValue = 'Serviços';
+    } else if (lowerPrompt.includes('instalação')) {
+      filterValue = 'Instalação';
+    }
   }
   
   console.log('🤖 [ANALYZE] Valor final selecionado:', filterValue);
@@ -239,7 +287,11 @@ function generateFilterLabel(filterType: string, filterValue: string, prompt: st
     dueDate: 'Data de Vencimento',
     valueRange: 'Faixa de Valor',
     contractCount: 'Quantidade de Contratos',
-    status: 'Status do Contrato'
+    status: 'Status do Contrato',
+    risco: 'Risco',
+    prioridade: 'Prioridade',
+    areaResponsavel: 'Área Responsável',
+    tipoContrato: 'Tipo de Contrato'
   };
   
   const valueLabels = {
