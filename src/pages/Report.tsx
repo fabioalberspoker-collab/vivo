@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, FileText } from 'lucide-react';
 import { ContractFromDB } from "@/hooks/useContractFilters";
 import { BatchAnalysisResult } from "@/components/integrations/ai/contractAnalysisService";
+import { DashboardCharts } from "@/components/DashboardCharts";
 
 interface ReportPageState {
   results: BatchAnalysisResult;
@@ -370,6 +371,12 @@ const Report = () => {
               </div>
             )}
           </div>
+
+          {/* Dashboard de Gráficos */}
+          <DashboardCharts 
+            contracts={contracts} 
+            analysisResults={results} 
+          />
 
           {/* Análise consolidada */}
           {results.summary && (
