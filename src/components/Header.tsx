@@ -26,7 +26,7 @@ const Header = ({ filteredContracts = [] }: HeaderProps) => {
         state: contract.estado || ''
       }));
       
-      await analyzeContracts(contractsToAnalyze);
+      await analyzeContracts(contractsToAnalyze, filteredContracts);
     } catch (error) {
       console.error('Erro durante a análise dos contratos:', error);
       

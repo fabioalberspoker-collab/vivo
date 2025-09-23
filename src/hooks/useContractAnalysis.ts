@@ -13,7 +13,7 @@ export const useContractAnalysis = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const analyzeContracts = async (contracts: Contract[]) => {
+  const analyzeContracts = async (contracts: Contract[], originalContracts?: ContractFromDB[]) => {
     setIsAnalyzing(true);
     setAnalysisStatus('Iniciando análise...');
     
@@ -191,8 +191,9 @@ e está programado para vencimento em ${contract.dueDate || 'data não especific
         });
       }
       
-      // Converter contratos do tipo Contract para ContractFromDB para compatibilidade com o Report
-      const convertedContracts = contracts.map(contract => ({
+      
+      // Usar contratos originais se fornecidos, senão fazer conversão
+      const contractsForReport = originalContracts || contracts.map(contract => ({
         numero_contrato: contract.number,
         fornecedor: contract.supplier,
         tipo_fluxo: contract.flowType,
@@ -200,13 +201,19 @@ e está programado para vencimento em ${contract.dueDate || 'data não especific
         valor_pagamento: contract.value, // Usando o mesmo valor para simplificar
         regiao: contract.region,
         estado: contract.state,
+        municipio: contract.state, // Usando estado como municipio temporariamente
         status: contract.status === 'paid' ? 'Pago' : 
                contract.status === 'pending' ? 'Pendente' : 
                contract.status === 'overdue' ? 'Vencido' : 'Processando',
-        data_vencimento: contract.dueDate
+        data_vencimento: contract.dueDate,
+        data_assinatura: new Date().toISOString().split('T')[0], // Data atual como assinatura
+        area_responsavel: 'TI', // Área padrão - pode ser customizada depois
+        prioridade: 'Média', // Prioridade padrão
+        risco: 'Baixo', // Risco padrão
+        responsavel: 'Sistema' // Responsável padrão
       }));
       
-      navigate('/report', { state: { results: batchResults, contracts: convertedContracts } });
+      navigate('/report', { state: { results: batchResults, contracts: contractsForReport } });
       
     } catch (error) {
       console.error('Erro ao analisar contratos:', error);
