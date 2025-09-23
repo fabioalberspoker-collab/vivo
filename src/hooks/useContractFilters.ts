@@ -59,7 +59,6 @@ export const useContractFilters = () => {
           console.error("❌ [SUPABASE] Erro ao carregar da tabela 'contracts':", error);
           
           // Fallback: usar dados mock para demonstração
-          console.log("🔄 Usando dados mock como fallback...");
           const mockData: ContractFromDB[] = [
             {
               numero_contrato: 'CT-2024-001',

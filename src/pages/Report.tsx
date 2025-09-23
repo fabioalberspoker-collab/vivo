@@ -256,12 +256,6 @@ const Report = () => {
   const totalAnalyzed = results.results.length;
   const successfulAnalyses = results.results.filter((r: any) => !r.error).length;
 
-  // Debug: log dos dados recebidos
-  console.log('Report Debug - Results:', results);
-  console.log('Report Debug - Contracts:', contracts);
-  console.log('Report Debug - Total contracts:', contracts.length);
-  console.log('Report Debug - Total results:', results.results.length);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200 px-6 py-4 print:hidden">
@@ -285,31 +279,6 @@ const Report = () => {
                Relatório de Análise de Contratos
             </h1>
             <p className="text-gray-600">Gerado em: {timestamp}</p>
-          </div>
-
-          {/* Debug: Mostrar informações dos dados recebidos */}
-          <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-            <h4 className="font-semibold text-yellow-800 mb-2">🔍 Debug - Dados Recebidos:</h4>
-            <div className="text-sm text-yellow-700 space-y-1">
-              <p><strong>Total de resultados:</strong> {results?.results?.length || 0}</p>
-              <p><strong>Total de contratos:</strong> {contracts?.length || 0}</p>
-              {results?.results?.[0] && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer font-medium">Ver primeiro resultado</summary>
-                  <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-32">
-                    {JSON.stringify(results.results[0], null, 2)}
-                  </pre>
-                </details>
-              )}
-              {contracts?.[0] && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer font-medium">Ver primeiro contrato</summary>
-                  <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-32">
-                    {JSON.stringify(contracts[0], null, 2)}
-                  </pre>
-                </details>
-              )}
-            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -460,16 +429,6 @@ const Report = () => {
                           area_responsavel: 'N/A',
                           prioridade: 'N/A'
                         } as ContractFromDB;
-                      }
-                      
-                      // Debug: log para os primeiros itens
-                      if (index < 3) {
-                        console.log(`Debug Item ${index}:`, {
-                          contractId: result.contractId,
-                          hasAnalysis: !!result.analysis,
-                          hasError: !!result.error,
-                          foundContract: !!contract
-                        });
                       }
                       
                       // Mostrar linha para análises bem-sucedidas OU com erro

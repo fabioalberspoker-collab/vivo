@@ -10,10 +10,6 @@ interface HeaderProps {
 const Header = ({ filteredContracts = [] }: HeaderProps) => {
   const { analyzeContracts, isAnalyzing, analysisStatus } = useContractAnalysis();
 
-  // Debug: log para verificar quantos contratos estão sendo passados
-  console.log('Header Debug - Contratos recebidos:', filteredContracts.length);
-  console.log('Header Debug - Primeiros 2 contratos:', filteredContracts.slice(0, 2));
-
   const handleExportReport = async () => {
     try {
       // Convert ContractFromDB to Contract format
