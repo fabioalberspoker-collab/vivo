@@ -335,65 +335,83 @@ const Report = () => {
               📊 Dashboard Analítico
             </h2>
             
-            <Tabs defaultValue="risk" className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="risk">Riscos</TabsTrigger>
-                <TabsTrigger value="types">Tipos</TabsTrigger>
-                <TabsTrigger value="areas">Áreas</TabsTrigger>
-                <TabsTrigger value="payment">Pagamento</TabsTrigger>
-                <TabsTrigger value="contract-values">Valores Contrato</TabsTrigger>
-                <TabsTrigger value="payment-values">Valores Pagamento</TabsTrigger>
-                <TabsTrigger value="status">Status</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="risk" className="mt-6">
-                <DashboardChart 
-                  data={aggregateRiskData(results.results, contracts)} 
-                  title="Distribuição por Nível de Risco" 
-                />
-              </TabsContent>
-              
-              <TabsContent value="types" className="mt-6">
-                <DashboardChart 
-                  data={aggregateContractTypeData(contracts)} 
-                  title="Distribuição por Tipo de Contrato" 
-                />
-              </TabsContent>
-              
-              <TabsContent value="areas" className="mt-6">
-                <DashboardChart 
-                  data={aggregateAreaData(contracts)} 
-                  title="Distribuição por Área Responsável" 
-                />
-              </TabsContent>
-              
-              <TabsContent value="payment" className="mt-6">
-                <DashboardChart 
-                  data={aggregatePaymentStatusData(contracts)} 
-                  title="Distribuição por Status de Pagamento" 
-                />
-              </TabsContent>
-              
-              <TabsContent value="contract-values" className="mt-6">
-                <DashboardChart 
-                  data={aggregateValueRanges(contracts, 'valor_contrato')} 
-                  title="Distribuição por Faixa de Valor do Contrato" 
-                />
-              </TabsContent>
-              
-              <TabsContent value="payment-values" className="mt-6">
-                <DashboardChart 
-                  data={aggregateValueRanges(contracts, 'valor_pagamento')} 
-                  title="Distribuição por Faixa de Valor de Pagamento" 
-                />
-              </TabsContent>
-              
-              <TabsContent value="status" className="mt-6">
-                <DashboardChart 
-                  data={aggregateStatusData(contracts)} 
-                  title="Distribuição por Status" 
-                />
-              </TabsContent>
+            <Tabs defaultValue="risk" className="w-full" orientation="vertical">
+              <div className="flex gap-6">
+                <TabsList className="flex flex-col h-fit w-48 bg-gray-50">
+                  <TabsTrigger value="risk" className="w-full justify-start text-left px-4 py-3">
+                    🎯 Riscos
+                  </TabsTrigger>
+                  <TabsTrigger value="types" className="w-full justify-start text-left px-4 py-3">
+                    📋 Tipos
+                  </TabsTrigger>
+                  <TabsTrigger value="areas" className="w-full justify-start text-left px-4 py-3">
+                    🏢 Áreas
+                  </TabsTrigger>
+                  <TabsTrigger value="payment" className="w-full justify-start text-left px-4 py-3">
+                    💳 Pagamento
+                  </TabsTrigger>
+                  <TabsTrigger value="contract-values" className="w-full justify-start text-left px-4 py-3">
+                    💰 Valores Contrato
+                  </TabsTrigger>
+                  <TabsTrigger value="payment-values" className="w-full justify-start text-left px-4 py-3">
+                    💵 Valores Pagamento
+                  </TabsTrigger>
+                  <TabsTrigger value="status" className="w-full justify-start text-left px-4 py-3">
+                    📊 Status
+                  </TabsTrigger>
+                </TabsList>
+                
+                <div className="flex-1">
+                  <TabsContent value="risk" className="mt-0">
+                    <DashboardChart 
+                      data={aggregateRiskData(results.results, contracts)} 
+                      title="Distribuição por Nível de Risco" 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="types" className="mt-0">
+                    <DashboardChart 
+                      data={aggregateContractTypeData(contracts)} 
+                      title="Distribuição por Tipo de Contrato" 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="areas" className="mt-0">
+                    <DashboardChart 
+                      data={aggregateAreaData(contracts)} 
+                      title="Distribuição por Área Responsável" 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="payment" className="mt-0">
+                    <DashboardChart 
+                      data={aggregatePaymentStatusData(contracts)} 
+                      title="Distribuição por Status de Pagamento" 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="contract-values" className="mt-0">
+                    <DashboardChart 
+                      data={aggregateValueRanges(contracts, 'valor_contrato')} 
+                      title="Distribuição por Faixa de Valor do Contrato" 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="payment-values" className="mt-0">
+                    <DashboardChart 
+                      data={aggregateValueRanges(contracts, 'valor_pagamento')} 
+                      title="Distribuição por Faixa de Valor de Pagamento" 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="status" className="mt-0">
+                    <DashboardChart 
+                      data={aggregateStatusData(contracts)} 
+                      title="Distribuição por Status" 
+                    />
+                  </TabsContent>
+                </div>
+              </div>
             </Tabs>
           </div>
 
