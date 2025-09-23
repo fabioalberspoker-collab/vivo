@@ -38,8 +38,8 @@ DADOS DO CONTRATO:
 - Fornecedor: ${contract.supplier}
 - Valor: R$ ${contract.value?.toLocaleString('pt-BR') || 'N/A'}
 - Data de Vencimento: ${contract.dueDate || 'A definir'}
-- Localização: ${contract.location}
-- Fluxo: ${contract.flow}
+- Localização: ${contract.region}
+- Fluxo: ${contract.flowType}
 - Status: ${contract.status || 'Ativo'}
 
 DESCRIÇÃO:
@@ -65,9 +65,17 @@ e está programado para vencimento em ${contract.dueDate || 'data não especific
         } catch (error) {
           console.error(`Erro ao analisar contrato ${contract.number}:`, error);
           
+          // Verificar se é erro de modelo sobrecarregado
+          const isOverloadedError = error instanceof Error && 
+            (error.message.includes('503') || error.message.includes('overloaded'));
+          
+          const errorMessage = isOverloadedError 
+            ? 'API temporariamente sobrecarregada - análise parcial gerada'
+            : 'Erro na análise - dados básicos incluídos';
+          
           // Fallback com dados básicos em caso de erro
           const fallbackAnalysis: ContractAnalysisResult = {
-            summary: `Erro na análise do contrato ${contract.number}. Contrato de ${contract.type} com ${contract.supplier}.`,
+            summary: `${errorMessage}. Contrato ${contract.number}: ${contract.type} com ${contract.supplier}.`,
             keyTerms: {
               parties: [contract.supplier, "Vivo"],
               value: `R$ ${contract.value?.toLocaleString('pt-BR') || 'N/A'}`,
@@ -76,13 +84,13 @@ e está programado para vencimento em ${contract.dueDate || 'data não especific
               duration: "A definir"
             },
             riskAnalysis: {
-              highRisk: ["Erro na análise - revisar manualmente"],
+              highRisk: isOverloadedError ? ["Análise IA indisponível - revisar manualmente"] : ["Erro na análise - revisar manualmente"],
               mediumRisk: ["Verificar documentação completa"],
               lowRisk: []
             },
             clauses: {
-              payment: ["Erro na análise"],
-              termination: ["Erro na análise"],
+              payment: [isOverloadedError ? "Análise IA indisponível" : "Erro na análise"],
+              termination: [isOverloadedError ? "Análise IA indisponível" : "Erro na análise"],
               liability: ["Erro na análise"],
               other: []
             },

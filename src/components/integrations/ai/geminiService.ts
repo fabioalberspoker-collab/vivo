@@ -183,13 +183,16 @@ export class GeminiService {
   }
 
   /**
-   * Envia prompt para o Gemini e retorna resposta
+   * Envia prompt para o Gemini e retorna resposta com retry automático
    */
-  async generateContent(prompt: string): Promise<GeminiResponse> {
+  async generateContent(prompt: string, retryCount = 0): Promise<GeminiResponse> {
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 segundo
+    
     try {
       const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`;
       
-      console.log('🤖 Chamando Gemini API:', url);
+      console.log(`🤖 Chamando Gemini API (tentativa ${retryCount + 1}/${maxRetries + 1}):`, url);
       
       const response = await fetch(url, {
         method: 'POST',
@@ -236,12 +239,22 @@ export class GeminiService {
           statusText: response.statusText,
           body: errorText
         });
+
+        // Se for erro 503 (modelo sobrecarregado) e ainda temos tentativas, fazer retry
+        if (response.status === 503 && retryCount < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retryCount); // Backoff exponencial
+          console.log(`⏳ Modelo sobrecarregado. Tentando novamente em ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return this.generateContent(prompt, retryCount + 1);
+        }
+
         throw new Error(`Erro na API Gemini: ${response.status} ${response.statusText}. Detalhes: ${errorText}`);
       }
 
       const data = await response.json();
       
       if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        console.log('✅ Resposta recebida do Gemini com sucesso');
         return {
           text: data.candidates[0].content.parts[0].text
         };
@@ -251,6 +264,18 @@ export class GeminiService {
 
     } catch (error) {
       console.error('Erro ao chamar Gemini API:', error);
+      
+      // Se for erro de rede ou timeout e ainda temos tentativas, fazer retry
+      if (retryCount < maxRetries && (
+        error instanceof TypeError || // Erro de rede
+        (error instanceof Error && error.message.includes('fetch'))
+      )) {
+        const delay = baseDelay * Math.pow(2, retryCount);
+        console.log(`⏳ Erro de rede. Tentando novamente em ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.generateContent(prompt, retryCount + 1);
+      }
+
       return {
         text: '',
         error: error instanceof Error ? error.message : 'Erro desconhecido'

@@ -48,7 +48,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({ contracts, ana
     const flowCounts: Record<string, number> = {};
     
     contracts.forEach(contract => {
-      const flow = contract.flow || 'Não especificado';
+      const flow = contract.flowType || 'Não especificado';
       flowCounts[flow] = (flowCounts[flow] || 0) + 1;
     });
     
@@ -65,7 +65,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({ contracts, ana
     const locationCounts: Record<string, number> = {};
     
     contracts.forEach(contract => {
-      const location = contract.location || 'Não especificado';
+      const location = contract.region || 'Não especificado';
       locationCounts[location] = (locationCounts[location] || 0) + 1;
     });
     

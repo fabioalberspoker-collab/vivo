@@ -11,21 +11,30 @@ const Header = ({ filteredContracts = [] }: HeaderProps) => {
   const { analyzeContracts, isAnalyzing } = useContractAnalysis();
 
   const handleExportReport = async () => {
-    // Convert ContractFromDB to Contract format
-    const contractsToAnalyze = filteredContracts.map(contract => ({
-      id: contract.numero_contrato || '',
-      number: contract.numero_contrato || '',
-      supplier: contract.fornecedor || '',
-      type: contract.tipo_fluxo || '',
-      value: contract.valor_contrato || 0,
-      status: 'pending' as const,
-      dueDate: contract.data_vencimento || '',
-      flowType: contract.tipo_fluxo || '',
-      region: contract.regiao || '',
-      state: contract.estado || ''
-    }));
-    
-    await analyzeContracts(contractsToAnalyze);
+    try {
+      // Convert ContractFromDB to Contract format
+      const contractsToAnalyze = filteredContracts.map(contract => ({
+        id: contract.numero_contrato || '',
+        number: contract.numero_contrato || '',
+        supplier: contract.fornecedor || '',
+        type: contract.tipo_fluxo || '',
+        value: contract.valor_contrato || 0,
+        status: 'pending' as const,
+        dueDate: contract.data_vencimento || '',
+        flowType: contract.tipo_fluxo || '',
+        region: contract.regiao || '',
+        state: contract.estado || ''
+      }));
+      
+      await analyzeContracts(contractsToAnalyze);
+    } catch (error) {
+      console.error('Erro durante a análise dos contratos:', error);
+      
+      // Verificar se é erro de API sobrecarregada
+      if (error instanceof Error && error.message.includes('503')) {
+        console.warn('⚠️ API Gemini temporariamente sobrecarregada. Alguns contratos podem ter análise limitada.');
+      }
+    }
   };
 
   const getButtonText = () => {
