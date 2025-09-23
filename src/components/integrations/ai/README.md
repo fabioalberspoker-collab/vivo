@@ -17,7 +17,7 @@ Para utilizar a funcionalidade de análise de contratos com IA, é necessário c
 Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
-REACT_APP_GEMINI_API_KEY=sua_chave_aqui
+VITE_GEMINI_API_KEY=sua_chave_aqui
 ```
 
 ### Opção 2: Configuração manual
@@ -38,6 +38,6 @@ Se não configurar a variável de ambiente, o sistema solicitará a chave quando
 
 ## Solução de problemas
 
-- **"Chave da API não configurada"**: Verifique se a variável REACT_APP_GEMINI_API_KEY está definida
+- **"Chave da API não configurada"**: Verifique se a variável VITE_GEMINI_API_KEY está definida
 - **"Nenhum contrato encontrado"**: Aplique filtros antes de gerar o relatório
 - **"Erro na análise"**: Verifique a conexão com a internet e se a chave da API é válida

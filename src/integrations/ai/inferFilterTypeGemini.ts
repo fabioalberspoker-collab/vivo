@@ -8,8 +8,8 @@ import path from 'path';
  * @param column Nome da coluna
  */
 export async function inferFilterTypeGemini(samples: unknown[], table?: string, column?: string): Promise<{ tipo_filtro: string; configuracoes: Record<string, unknown> }> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY não configurada');
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY não configurada');
 
   // Lê o prompt do arquivo seletorFiltro.md
   const promptPath = path.join(process.cwd(), 'src', 'integrations', 'ai', 'seletorFiltro.md');

@@ -7,8 +7,8 @@ const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_AN
 
 // Integração com Gemini
 async function callAIToInferFilterType(samples: any[]): Promise<{ tipo_filtro: string; configuracoes: any }> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY não configurada');
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY não configurada');
 
   // Monta o prompt para o Gemini
   const prompt = `Você é um assistente para criação de filtros em sistemas de BI. Analise os seguintes exemplos de dados de uma coluna e retorne um JSON no formato:\n{\n  "tipo_filtro": "texto|range|numérico|data|booleano|categoria|multiselect",\n  "configuracoes": { /* parâmetros relevantes */ }\n}\nApenas o JSON, sem explicações.\nAmostras: ${JSON.stringify(samples.slice(0, 20))}`;

@@ -8,16 +8,28 @@ interface HeaderProps {
 }
 
 const Header = ({ filteredContracts = [] }: HeaderProps) => {
-  // Usar a chave da API Gemini diretamente
-  const GEMINI_API_KEY = "AIzaSyD918kJyTaAlXtxXrfoBMjdwnxWLk0yqaw";
-  const { analyzeContracts, analysisState } = useContractAnalysis(GEMINI_API_KEY);
+  const { analyzeContracts, isAnalyzing } = useContractAnalysis();
 
   const handleExportReport = async () => {
-    await analyzeContracts(filteredContracts);
+    // Convert ContractFromDB to Contract format
+    const contractsToAnalyze = filteredContracts.map(contract => ({
+      id: contract.numero_contrato || '',
+      number: contract.numero_contrato || '',
+      supplier: contract.fornecedor || '',
+      type: contract.tipo_fluxo || '',
+      value: contract.valor_contrato || 0,
+      status: 'pending' as const,
+      dueDate: contract.data_vencimento || '',
+      flowType: contract.tipo_fluxo || '',
+      region: contract.regiao || '',
+      state: contract.estado || ''
+    }));
+    
+    await analyzeContracts(contractsToAnalyze);
   };
 
   const getButtonText = () => {
-    if (!analysisState.isAnalyzing) {
+    if (!isAnalyzing) {
       return (
         <>
           <Brain className="mr-2 h-4 w-4" />
@@ -26,20 +38,10 @@ const Header = ({ filteredContracts = [] }: HeaderProps) => {
       );
     }
 
-    const progress = analysisState.progress;
-    if (!progress) {
-      return (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Preparando...
-        </>
-      );
-    }
-
     return (
       <>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        {progress.message} ({progress.progress}%)
+        Analisando contratos...
       </>
     );
   };
@@ -68,7 +70,7 @@ const Header = ({ filteredContracts = [] }: HeaderProps) => {
             size="sm" 
             className="text-vivo-purple border-vivo-purple hover:bg-vivo-purple hover:text-white"
             onClick={handleExportReport}
-            disabled={analysisState.isAnalyzing || filteredContracts.length === 0}
+            disabled={isAnalyzing || filteredContracts.length === 0}
           >
             {getButtonText()}
           </Button>

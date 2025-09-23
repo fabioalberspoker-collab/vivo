@@ -86,7 +86,7 @@ build: {
 No painel do Vercel, adicione:
 ```
 VITE_API_URL=https://seu-projeto.vercel.app
-GEMINI_API_KEY=sua_chave_gemini
+VITE_GEMINI_API_KEY=sua_chave_gemini
 ```
 
 ### Passo 2: Commit e Push
