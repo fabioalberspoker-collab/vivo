@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { GeminiService, type ContractAnalysisResult } from '@/components/integrations/ai/geminiService';
 import type { Contract } from '@/data/mockContracts';
+import type { ContractFromDB } from '@/hooks/useContractFilters';
 import type { BatchAnalysisResult, AnalysisResult } from '@/components/integrations/ai/contractAnalysisService';
 
 export const useContractAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<string>('');
   const [analysisResults, setAnalysisResults] = useState<BatchAnalysisResult | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const analyzeContracts = async (contracts: Contract[]) => {
     setIsAnalyzing(true);
+    setAnalysisStatus('Iniciando análise...');
     
     try {
       const geminiService = new GeminiService({
@@ -24,7 +29,10 @@ export const useContractAnalysis = () => {
       let errorCount = 0;
 
       // Processar cada contrato individualmente
-      for (const contract of contracts) {
+      for (let i = 0; i < contracts.length; i++) {
+        const contract = contracts[i];
+        setAnalysisStatus(`Analisando contrato ${i + 1} de ${contracts.length}: ${contract.supplier}...`);
+        
         const contractStartTime = Date.now();
         
         try {
@@ -65,13 +73,52 @@ e está programado para vencimento em ${contract.dueDate || 'data não especific
         } catch (error) {
           console.error(`Erro ao analisar contrato ${contract.number}:`, error);
           
-          // Verificar se é erro de modelo sobrecarregado
-          const isOverloadedError = error instanceof Error && 
-            (error.message.includes('503') || error.message.includes('overloaded'));
+          // Verificar tipo específico de erro para melhor feedback
+          let errorType = 'unknown';
+          let userMessage = 'Erro na análise - dados básicos incluídos';
           
-          const errorMessage = isOverloadedError 
-            ? 'API temporariamente sobrecarregada - análise parcial gerada'
-            : 'Erro na análise - dados básicos incluídos';
+          if (error instanceof Error) {
+            if (error.message.includes('503') || error.message.includes('Service Unavailable')) {
+              errorType = 'service_unavailable';
+              userMessage = '🔄 Serviço IA indisponível - tentando reconectar';
+              setAnalysisStatus(`⚠️ Serviço IA temporariamente indisponível. Gerando análise básica...`);
+              
+              // Toast para erro 503
+              if (i === 0) { // Mostrar apenas uma vez
+                toast({
+                  title: "⚠️ Serviço IA Indisponível",
+                  description: "O serviço de análise está temporariamente sobrecarregado. O sistema continuará gerando análises básicas automaticamente.",
+                  variant: "destructive",
+                });
+              }
+            } else if (error.message.includes('429') || error.message.includes('rate limit')) {
+              errorType = 'rate_limit';
+              userMessage = '⏳ Limite de uso atingido - análise básica gerada';
+              setAnalysisStatus(`⏳ Limite de API atingido. Continuando com análise simplificada...`);
+              
+              if (i === 0) {
+                toast({
+                  title: "⏳ Limite de Uso Atingido",
+                  description: "Limite da API temporariamente atingido. Aguarde alguns minutos ou continue com análises básicas.",
+                  variant: "destructive",
+                });
+              }
+            } else if (error.message.includes('fetch') || error.message.includes('network')) {
+              errorType = 'network';
+              userMessage = '📡 Problema de conectividade - análise básica gerada';
+              setAnalysisStatus(`📡 Problema de rede detectado. Continuando com dados básicos...`);
+              
+              if (i === 0) {
+                toast({
+                  title: "📡 Problema de Conectividade",
+                  description: "Problema de rede detectado. Verifique sua conexão e tente novamente se necessário.",
+                  variant: "destructive",
+                });
+              }
+            }
+          }
+          
+          const errorMessage = userMessage;
           
           // Fallback com dados básicos em caso de erro
           const fallbackAnalysis: ContractAnalysisResult = {
@@ -84,13 +131,13 @@ e está programado para vencimento em ${contract.dueDate || 'data não especific
               duration: "A definir"
             },
             riskAnalysis: {
-              highRisk: isOverloadedError ? ["Análise IA indisponível - revisar manualmente"] : ["Erro na análise - revisar manualmente"],
+              highRisk: errorType === 'service_unavailable' ? ["Análise IA indisponível - revisar manualmente"] : ["Erro na análise - revisar manualmente"],
               mediumRisk: ["Verificar documentação completa"],
               lowRisk: []
             },
             clauses: {
-              payment: [isOverloadedError ? "Análise IA indisponível" : "Erro na análise"],
-              termination: [isOverloadedError ? "Análise IA indisponível" : "Erro na análise"],
+              payment: [errorType === 'service_unavailable' ? "Análise IA indisponível" : "Erro na análise"],
+              termination: [errorType === 'service_unavailable' ? "Análise IA indisponível" : "Erro na análise"],
               liability: ["Erro na análise"],
               other: []
             },
@@ -121,19 +168,60 @@ e está programado para vencimento em ${contract.dueDate || 'data não especific
       };
       
       setAnalysisResults(batchResults);
-      navigate('/report', { state: { results: batchResults, contracts } });
+      setAnalysisStatus('Análise concluída! Redirecionando para o relatório...');
+      
+      // Toast de sucesso ou aviso baseado nos resultados
+      if (errorCount === 0) {
+        toast({
+          title: "✅ Análise Concluída",
+          description: `${successCount} contratos analisados com sucesso!`,
+          variant: "default",
+        });
+      } else if (successCount > 0) {
+        toast({
+          title: "⚠️ Análise Parcialmente Concluída",
+          description: `${successCount} contratos analisados com sucesso, ${errorCount} com problemas. Verifique o relatório para detalhes.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "❌ Problemas na Análise",
+          description: `Todos os contratos tiveram problemas na análise. Dados básicos foram gerados.`,
+          variant: "destructive",
+        });
+      }
+      
+      // Converter contratos do tipo Contract para ContractFromDB para compatibilidade com o Report
+      const convertedContracts = contracts.map(contract => ({
+        numero_contrato: contract.number,
+        fornecedor: contract.supplier,
+        tipo_fluxo: contract.flowType,
+        valor_contrato: contract.value,
+        valor_pagamento: contract.value, // Usando o mesmo valor para simplificar
+        regiao: contract.region,
+        estado: contract.state,
+        status: contract.status === 'paid' ? 'Pago' : 
+               contract.status === 'pending' ? 'Pendente' : 
+               contract.status === 'overdue' ? 'Vencido' : 'Processando',
+        data_vencimento: contract.dueDate
+      }));
+      
+      navigate('/report', { state: { results: batchResults, contracts: convertedContracts } });
       
     } catch (error) {
       console.error('Erro ao analisar contratos:', error);
+      setAnalysisStatus('Erro durante a análise. Tente novamente.');
       throw error;
     } finally {
       setIsAnalyzing(false);
+      setTimeout(() => setAnalysisStatus(''), 2000); // Limpar status após 2 segundos
     }
   };
 
   return {
     analyzeContracts,
     isAnalyzing,
+    analysisStatus,
     analysisResults
   };
 };

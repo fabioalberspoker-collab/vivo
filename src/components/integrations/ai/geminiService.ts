@@ -186,8 +186,8 @@ export class GeminiService {
    * Envia prompt para o Gemini e retorna resposta com retry automático
    */
   async generateContent(prompt: string, retryCount = 0): Promise<GeminiResponse> {
-    const maxRetries = 3;
-    const baseDelay = 1000; // 1 segundo
+    const maxRetries = 5; // Aumentado para 5 tentativas
+    const baseDelay = 2000; // Aumentado para 2 segundos
     
     try {
       const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`;
@@ -240,10 +240,10 @@ export class GeminiService {
           body: errorText
         });
 
-        // Se for erro 503 (modelo sobrecarregado) e ainda temos tentativas, fazer retry
-        if (response.status === 503 && retryCount < maxRetries) {
+        // Se for erro 503 (modelo sobrecarregado) ou 429 (rate limit) e ainda temos tentativas, fazer retry
+        if ((response.status === 503 || response.status === 429) && retryCount < maxRetries) {
           const delay = baseDelay * Math.pow(2, retryCount); // Backoff exponencial
-          console.log(`⏳ Modelo sobrecarregado. Tentando novamente em ${delay}ms...`);
+          console.log(`⏳ Serviço temporariamente indisponível (${response.status}). Tentando novamente em ${delay}ms... (${retryCount + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
           return this.generateContent(prompt, retryCount + 1);
         }

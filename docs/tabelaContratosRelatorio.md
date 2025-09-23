@@ -1,0 +1,3 @@
+Na tela de relatório dos contratos filtrados. Ao invés de mostrar o relatório individual de cada contrato, quero que mostre uma tabela com os relatórios que foram filtrados e nessa tabala deve ter uma opção para visualizar o resumo do relatório, tipo o icone de olho da tela principal, ao clicar nesse ícone deve abrir o relatório do contrato em uma tela nde pop up.
+
+NÃO FAÇA NENHUMA ALTERAÇÃO NA TABELA DA TELA PRINCIPAL DA APLICAÇÃO.

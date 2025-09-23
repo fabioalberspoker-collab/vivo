@@ -169,14 +169,23 @@ export class ContractAnalysisService {
 
     } catch (error) {
       const processingTime = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      let errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      
+      // Tratar erros específicos de conectividade com mensagens mais amigáveis
+      if (errorMessage.includes('503') || errorMessage.includes('Service Unavailable')) {
+        errorMessage = '🔄 Serviço de IA temporariamente indisponível. O sistema está tentando reconectar automaticamente. Tente novamente em alguns minutos.';
+      } else if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+        errorMessage = '⏳ Limite de uso da API atingido. Aguarde alguns minutos antes de tentar novamente.';
+      } else if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('NETWORK_ERROR')) {
+        errorMessage = '📡 Problema de conectividade detectado. Verifique sua conexão de internet e tente novamente.';
+      }
 
       console.error(`❌ Erro na análise de ${contractFile.fileName}:`, error);
 
       onProgress?.({
         stage: 'error',
         progress: 0,
-        message: `Erro: ${errorMessage}`,
+        message: `${errorMessage}`,
         currentFile: contractFile.fileName
       });
 

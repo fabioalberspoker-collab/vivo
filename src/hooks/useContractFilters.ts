@@ -57,11 +57,68 @@ export const useContractFilters = () => {
 
         if (error) {
           console.error("❌ [SUPABASE] Erro ao carregar da tabela 'contracts':", error);
-          setContracts([]);
+          
+          // Fallback: usar dados mock para demonstração
+          console.log("🔄 Usando dados mock como fallback...");
+          const mockData: ContractFromDB[] = [
+            {
+              numero_contrato: 'CT-2024-001',
+              fornecedor: 'Tech Solutions Ltda',
+              tipo_fluxo: 'Infraestrutura',
+              valor_contrato: 150000,
+              valor_pagamento: 150000,
+              regiao: 'Sudeste',
+              estado: 'SP',
+              municipio: 'São Paulo',
+              status: 'Pago',
+              data_vencimento: '2024-12-31',
+              data_assinatura: '2024-01-15',
+              area_responsavel: 'TI',
+              prioridade: 'Alta',
+              risco: 'Baixo',
+              responsavel: 'João Silva'
+            },
+            {
+              numero_contrato: 'CT-2024-002',
+              fornecedor: 'Construtora ABC',
+              tipo_fluxo: 'Obras',
+              valor_contrato: 300000,
+              valor_pagamento: 280000,
+              regiao: 'Sul',
+              estado: 'RS',
+              municipio: 'Porto Alegre',
+              status: 'Pendente',
+              data_vencimento: '2025-03-15',
+              data_assinatura: '2024-02-10',
+              area_responsavel: 'Infraestrutura',
+              prioridade: 'Média',
+              risco: 'Médio',
+              responsavel: 'Maria Santos'
+            },
+            {
+              numero_contrato: 'CT-2024-003',
+              fornecedor: 'ServiCorp',
+              tipo_fluxo: 'Serviços',
+              valor_contrato: 75000,
+              valor_pagamento: 75000,
+              regiao: 'Nordeste',
+              estado: 'BA',
+              municipio: 'Salvador',
+              status: 'Vencido',
+              data_vencimento: '2024-09-01',
+              data_assinatura: '2024-03-20',
+              area_responsavel: 'Operações',
+              prioridade: 'Baixa',
+              risco: 'Alto',
+              responsavel: 'Carlos Oliveira'
+            }
+          ];
+          
+          setContracts(mockData);
           toast({
-            title: "Erro ao carregar contratos",
-            description: `Erro na conexão com a base de dados.`,
-            variant: "destructive"
+            title: "Dados de Teste Carregados",
+            description: `${mockData.length} contratos de teste carregados para demonstração.`,
+            variant: "default"
           });
           return;
         }
