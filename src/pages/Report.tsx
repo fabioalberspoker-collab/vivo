@@ -169,15 +169,89 @@ const Report = () => {
                     const contract = contracts.find(c => c.numero_contrato === result.contractId);
                     if (!result.error && result.analysis) {
                         return `
-                        <div class="contract-analysis">
-                            <h3>📄 Contrato: ${result.contractId}</h3>
+                        <div class="contract-analysis" style="margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                            <h3 style="color: #8B5CF6; margin-bottom: 15px;">📄 Contrato: ${result.contractId} 
+                                <span style="float: right; font-size: 14px; color: #666; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">Score: ${result.analysis.score || 'N/A'}/100</span>
+                            </h3>
+                            
                             ${contract ? `
-                            <p><strong>Fornecedor:</strong> ${contract.fornecedor || 'N/A'}</p>
-                            <p><strong>Valor:</strong> R$ ${(contract.valor_contrato || 0).toLocaleString('pt-BR')}</p>
-                            <p><strong>Status:</strong> ${contract.status || 'N/A'}</p>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                                    <div><strong>Fornecedor:</strong> ${contract.fornecedor || 'N/A'}</div>
+                                    <div><strong>Valor:</strong> <span style="color: #28a745;">R$ ${(contract.valor_contrato || 0).toLocaleString('pt-BR')}</span></div>
+                                    <div><strong>Status:</strong> ${contract.status || 'N/A'}</div>
+                                </div>
+                            </div>
                             ` : ''}
-                            <div style="margin-top: 15px; white-space: pre-wrap; line-height: 1.6;">
-                                ${result.analysis.summary.replace(/\n/g, '<br>')}
+                            
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #333; margin-bottom: 10px;">📋 Resumo Executivo</h4>
+                                <div style="background: #e3f2fd; padding: 15px; border-left: 4px solid #2196f3; border-radius: 4px;">
+                                    ${result.analysis.summary.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #333; margin-bottom: 10px;">🔑 Termos Principais</h4>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                                    <div style="background: #e8f5e8; padding: 10px; border-radius: 4px;">
+                                        <strong>Partes:</strong> ${result.analysis.keyTerms.parties.join(', ')}
+                                    </div>
+                                    <div style="background: #f3e5f5; padding: 10px; border-radius: 4px;">
+                                        <strong>Valor:</strong> ${result.analysis.keyTerms.value}
+                                    </div>
+                                    <div style="background: #fff3cd; padding: 10px; border-radius: 4px;">
+                                        <strong>Início:</strong> ${result.analysis.keyTerms.startDate}
+                                    </div>
+                                    <div style="background: #ffeaa7; padding: 10px; border-radius: 4px;">
+                                        <strong>Fim:</strong> ${result.analysis.keyTerms.endDate}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #333; margin-bottom: 10px;">⚠️ Análise de Riscos</h4>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                                    ${result.analysis.riskAnalysis.highRisk.length > 0 ? `
+                                    <div style="background: #ffebee; padding: 10px; border-radius: 4px; border: 1px solid #ffcdd2;">
+                                        <strong style="color: #c62828;">🔴 Alto Risco</strong>
+                                        <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #d32f2f;">
+                                            ${result.analysis.riskAnalysis.highRisk.map(risk => `<li>${risk}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                    ` : ''}
+                                    ${result.analysis.riskAnalysis.mediumRisk.length > 0 ? `
+                                    <div style="background: #fff8e1; padding: 10px; border-radius: 4px; border: 1px solid #ffecb3;">
+                                        <strong style="color: #f57c00;">🟡 Médio Risco</strong>
+                                        <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #ef6c00;">
+                                            ${result.analysis.riskAnalysis.mediumRisk.map(risk => `<li>${risk}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                    ` : ''}
+                                    ${result.analysis.riskAnalysis.lowRisk.length > 0 ? `
+                                    <div style="background: #e8f5e8; padding: 10px; border-radius: 4px; border: 1px solid #c8e6c9;">
+                                        <strong style="color: #2e7d32;">🟢 Baixo Risco</strong>
+                                        <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #388e3c;">
+                                            ${result.analysis.riskAnalysis.lowRisk.map(risk => `<li>${risk}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            
+                            ${result.analysis.recommendations.length > 0 ? `
+                            <div style="margin-bottom: 15px;">
+                                <h4 style="color: #333; margin-bottom: 10px;">💡 Recomendações</h4>
+                                <div style="background: #e8f5e8; padding: 15px; border-radius: 4px; border: 1px solid #4caf50;">
+                                    <ul style="margin: 0; padding-left: 20px; color: #2e7d32;">
+                                        ${result.analysis.recommendations.map(rec => `<li style="margin-bottom: 5px;">✓ ${rec}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div style="text-align: right; font-size: 12px; color: #666;">
+                                Tempo de processamento: ${result.processingTime}ms
                             </div>
                         </div>
                         `;
@@ -320,21 +394,184 @@ const Report = () => {
                 
                 if (!result.error && result.analysis) {
                   return (
-                    <div key={index} className="bg-white p-6 rounded-lg border border-gray-200">
-                      <h3 className="text-lg font-semibold text-vivo-purple mb-3">
+                    <div key={index} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                      <h3 className="text-lg font-semibold text-vivo-purple mb-4 flex items-center">
                         📄 Contrato: {result.contractId}
+                        <span className="ml-auto text-sm font-normal bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          Score: {result.analysis.score || 'N/A'}/100
+                        </span>
                       </h3>
+                      
                       {contract && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
-                          <p><strong>Fornecedor:</strong> {contract.fornecedor || 'N/A'}</p>
-                          <p><strong>Valor:</strong> R$ {(contract.valor_contrato || 0).toLocaleString('pt-BR')}</p>
-                          <p><strong>Status:</strong> {contract.status || 'N/A'}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded">
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Fornecedor</span>
+                            <p className="font-medium">{contract.fornecedor || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Valor</span>
+                            <p className="font-medium text-green-600">R$ {(contract.valor_contrato || 0).toLocaleString('pt-BR')}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
+                            <p className="font-medium">{contract.status || 'N/A'}</p>
+                          </div>
                         </div>
                       )}
-                      <div className="mt-4 p-4 bg-gray-50 rounded border">
-                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                          {result.analysis.summary}
+
+                      {/* Resumo Executivo */}
+                      <div className="mb-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-2 flex items-center">
+                          📋 Resumo Executivo
+                        </h4>
+                        <div className="p-4 bg-blue-50 rounded border-l-4 border-blue-400">
+                          <p className="text-gray-700 leading-relaxed">
+                            {result.analysis.summary}
+                          </p>
                         </div>
+                      </div>
+
+                      {/* Termos Principais */}
+                      <div className="mb-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                          🔑 Termos Principais
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-3 bg-green-50 rounded">
+                            <span className="text-xs text-green-600 uppercase tracking-wide font-semibold">Partes Envolvidas</span>
+                            <div className="mt-1">
+                              {result.analysis.keyTerms.parties.map((party, idx) => (
+                                <span key={idx} className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-1 mb-1">
+                                  {party}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="p-3 bg-purple-50 rounded">
+                            <span className="text-xs text-purple-600 uppercase tracking-wide font-semibold">Valor</span>
+                            <p className="text-purple-800 font-medium">{result.analysis.keyTerms.value}</p>
+                          </div>
+                          <div className="p-3 bg-yellow-50 rounded">
+                            <span className="text-xs text-yellow-600 uppercase tracking-wide font-semibold">Data Início</span>
+                            <p className="text-yellow-800 font-medium">{result.analysis.keyTerms.startDate}</p>
+                          </div>
+                          <div className="p-3 bg-orange-50 rounded">
+                            <span className="text-xs text-orange-600 uppercase tracking-wide font-semibold">Data Fim</span>
+                            <p className="text-orange-800 font-medium">{result.analysis.keyTerms.endDate}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Análise de Riscos */}
+                      <div className="mb-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                          ⚠️ Análise de Riscos
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {result.analysis.riskAnalysis.highRisk.length > 0 && (
+                            <div className="p-3 bg-red-50 rounded border border-red-200">
+                              <h5 className="text-sm font-semibold text-red-700 mb-2">🔴 Alto Risco</h5>
+                              <ul className="text-sm text-red-600">
+                                {result.analysis.riskAnalysis.highRisk.map((risk, idx) => (
+                                  <li key={idx} className="mb-1">• {risk}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {result.analysis.riskAnalysis.mediumRisk.length > 0 && (
+                            <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
+                              <h5 className="text-sm font-semibold text-yellow-700 mb-2">🟡 Médio Risco</h5>
+                              <ul className="text-sm text-yellow-600">
+                                {result.analysis.riskAnalysis.mediumRisk.map((risk, idx) => (
+                                  <li key={idx} className="mb-1">• {risk}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {result.analysis.riskAnalysis.lowRisk.length > 0 && (
+                            <div className="p-3 bg-green-50 rounded border border-green-200">
+                              <h5 className="text-sm font-semibold text-green-700 mb-2">🟢 Baixo Risco</h5>
+                              <ul className="text-sm text-green-600">
+                                {result.analysis.riskAnalysis.lowRisk.map((risk, idx) => (
+                                  <li key={idx} className="mb-1">• {risk}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Cláusulas Identificadas */}
+                      <div className="mb-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                          📝 Cláusulas Identificadas
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {result.analysis.clauses.payment.length > 0 && (
+                            <div className="p-3 bg-blue-50 rounded">
+                              <h5 className="text-sm font-semibold text-blue-700 mb-2">💳 Pagamento</h5>
+                              <ul className="text-sm text-blue-600">
+                                {result.analysis.clauses.payment.map((clause, idx) => (
+                                  <li key={idx} className="mb-1">• {clause}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {result.analysis.clauses.termination.length > 0 && (
+                            <div className="p-3 bg-red-50 rounded">
+                              <h5 className="text-sm font-semibold text-red-700 mb-2">🚫 Rescisão</h5>
+                              <ul className="text-sm text-red-600">
+                                {result.analysis.clauses.termination.map((clause, idx) => (
+                                  <li key={idx} className="mb-1">• {clause}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {result.analysis.clauses.liability.length > 0 && (
+                            <div className="p-3 bg-purple-50 rounded">
+                              <h5 className="text-sm font-semibold text-purple-700 mb-2">⚖️ Responsabilidade</h5>
+                              <ul className="text-sm text-purple-600">
+                                {result.analysis.clauses.liability.map((clause, idx) => (
+                                  <li key={idx} className="mb-1">• {clause}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {result.analysis.clauses.other.length > 0 && (
+                            <div className="p-3 bg-gray-50 rounded">
+                              <h5 className="text-sm font-semibold text-gray-700 mb-2">📄 Outras</h5>
+                              <ul className="text-sm text-gray-600">
+                                {result.analysis.clauses.other.map((clause, idx) => (
+                                  <li key={idx} className="mb-1">• {clause}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Recomendações */}
+                      {result.analysis.recommendations.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                            💡 Recomendações
+                          </h4>
+                          <div className="p-4 bg-green-50 rounded border border-green-200">
+                            <ul className="text-sm text-green-700">
+                              {result.analysis.recommendations.map((rec, idx) => (
+                                <li key={idx} className="mb-2 flex items-start">
+                                  <span className="text-green-500 mr-2">✓</span>
+                                  {rec}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tempo de Processamento */}
+                      <div className="text-xs text-gray-500 text-right">
+                        Tempo de processamento: {result.processingTime}ms
                       </div>
                     </div>
                   );
