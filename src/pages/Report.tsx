@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartContainer, ChartConfig } from "@/components/ui/chart";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { ContractFromDB } from "@/hooks/useContractFilters";
 
 interface ReportPageState {
@@ -19,6 +22,148 @@ interface ContractDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+// Chart color palette
+const CHART_COLORS = ["#660099", "#004fd0", "#0078ec", "#0099ee", "#00b7da", "#00d1bc"];
+
+// Helper functions for data aggregation
+const aggregateRiskData = (results: any[], contracts: ContractFromDB[]) => {
+  const riskCounts = { "Baixo Risco": 0, "Médio Risco": 0, "Alto Risco": 0 };
+  
+  results.forEach((result: any) => {
+    if (!result.error && result.analysis?.score) {
+      const score = result.analysis.score;
+      if (score >= 80) riskCounts["Baixo Risco"]++;
+      else if (score >= 50) riskCounts["Médio Risco"]++;
+      else riskCounts["Alto Risco"]++;
+    }
+  });
+
+  return Object.entries(riskCounts).map(([name, value], index) => ({
+    name,
+    value,
+    fill: CHART_COLORS[index % CHART_COLORS.length]
+  }));
+};
+
+const aggregateContractTypeData = (contracts: ContractFromDB[]) => {
+  const typeCounts: Record<string, number> = {};
+  contracts.forEach(contract => {
+    const type = contract.tipo_fluxo || "Não Informado";
+    typeCounts[type] = (typeCounts[type] || 0) + 1;
+  });
+
+  return Object.entries(typeCounts).map(([name, value], index) => ({
+    name,
+    value,
+    fill: CHART_COLORS[index % CHART_COLORS.length]
+  }));
+};
+
+const aggregateAreaData = (contracts: ContractFromDB[]) => {
+  const areaCounts: Record<string, number> = {};
+  contracts.forEach(contract => {
+    const area = contract.area_responsavel || "Não Informado";
+    areaCounts[area] = (areaCounts[area] || 0) + 1;
+  });
+
+  return Object.entries(areaCounts).map(([name, value], index) => ({
+    name,
+    value,
+    fill: CHART_COLORS[index % CHART_COLORS.length]
+  }));
+};
+
+const aggregatePaymentStatusData = (contracts: ContractFromDB[]) => {
+  const statusCounts: Record<string, number> = {};
+  contracts.forEach(contract => {
+    const status = contract.status || "Não Informado";
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+  });
+
+  return Object.entries(statusCounts).map(([name, value], index) => ({
+    name,
+    value,
+    fill: CHART_COLORS[index % CHART_COLORS.length]
+  }));
+};
+
+const aggregateValueRanges = (contracts: ContractFromDB[], valueField: 'valor_contrato' | 'valor_pagamento') => {
+  const ranges = {
+    "0 - 10k": 0,
+    "10k - 100k": 0,
+    "100k - 1M": 0,
+    "1M - 5M": 0,
+    "5M - 10M": 0,
+    "10M+": 0
+  };
+
+  contracts.forEach(contract => {
+    const value = contract[valueField] || 0;
+    if (value <= 10000) ranges["0 - 10k"]++;
+    else if (value <= 100000) ranges["10k - 100k"]++;
+    else if (value <= 1000000) ranges["100k - 1M"]++;
+    else if (value <= 5000000) ranges["1M - 5M"]++;
+    else if (value <= 10000000) ranges["5M - 10M"]++;
+    else ranges["10M+"]++;
+  });
+
+  return Object.entries(ranges).map(([name, value], index) => ({
+    name,
+    value,
+    fill: CHART_COLORS[index % CHART_COLORS.length]
+  }));
+};
+
+const aggregateStatusData = (contracts: ContractFromDB[]) => {
+  const statusCounts: Record<string, number> = {};
+  contracts.forEach(contract => {
+    const status = contract.status || "Não Informado";
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+  });
+
+  return Object.entries(statusCounts).map(([name, value], index) => ({
+    name,
+    value,
+    fill: CHART_COLORS[index % CHART_COLORS.length]
+  }));
+};
+
+// Chart component
+const DashboardChart = ({ data, title }: { data: any[], title: string }) => {
+  const config: ChartConfig = {};
+  
+  return (
+    <Card className="p-6">
+      <h3 className="text-lg font-semibold text-center mb-4 text-gray-800">{title}</h3>
+      <ChartContainer config={config} className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={120}
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Pie>
+            <Tooltip 
+              formatter={(value: any) => [value, "Quantidade"]}
+              labelStyle={{ color: '#374151' }}
+              contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
+            />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    </Card>
+  );
+};
 
 const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ 
   contract, 
@@ -169,19 +314,87 @@ const Report = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-600">
-              <h3 className="font-semibold text-gray-700 mb-2"> Total de Contratos</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">🔸 Total de Contratos</h3>
               <p className="text-3xl font-bold text-purple-600">{contracts.length}</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-green-500">
-              <h3 className="font-semibold text-gray-700 mb-2"> Análises Realizadas</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">🔸 Análises Realizadas</h3>
               <p className="text-3xl font-bold text-green-600">{totalAnalyzed}</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-blue-500">
-              <h3 className="font-semibold text-gray-700 mb-2"> Taxa de Sucesso</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">🔸 Taxa de Sucesso</h3>
               <p className={`text-3xl font-bold ${successfulAnalyses === totalAnalyzed ? "text-green-600" : "text-yellow-600"}`}>
                 {Math.round((successfulAnalyses / totalAnalyzed) * 100)}%
               </p>
             </div>
+          </div>
+
+          {/* Dashboard Charts Section */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-300">
+              📊 Dashboard Analítico
+            </h2>
+            
+            <Tabs defaultValue="risk" className="w-full">
+              <TabsList className="grid w-full grid-cols-7">
+                <TabsTrigger value="risk">Riscos</TabsTrigger>
+                <TabsTrigger value="types">Tipos</TabsTrigger>
+                <TabsTrigger value="areas">Áreas</TabsTrigger>
+                <TabsTrigger value="payment">Pagamento</TabsTrigger>
+                <TabsTrigger value="contract-values">Valores Contrato</TabsTrigger>
+                <TabsTrigger value="payment-values">Valores Pagamento</TabsTrigger>
+                <TabsTrigger value="status">Status</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="risk" className="mt-6">
+                <DashboardChart 
+                  data={aggregateRiskData(results.results, contracts)} 
+                  title="Distribuição por Nível de Risco" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="types" className="mt-6">
+                <DashboardChart 
+                  data={aggregateContractTypeData(contracts)} 
+                  title="Distribuição por Tipo de Contrato" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="areas" className="mt-6">
+                <DashboardChart 
+                  data={aggregateAreaData(contracts)} 
+                  title="Distribuição por Área Responsável" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="payment" className="mt-6">
+                <DashboardChart 
+                  data={aggregatePaymentStatusData(contracts)} 
+                  title="Distribuição por Status de Pagamento" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="contract-values" className="mt-6">
+                <DashboardChart 
+                  data={aggregateValueRanges(contracts, 'valor_contrato')} 
+                  title="Distribuição por Faixa de Valor do Contrato" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="payment-values" className="mt-6">
+                <DashboardChart 
+                  data={aggregateValueRanges(contracts, 'valor_pagamento')} 
+                  title="Distribuição por Faixa de Valor de Pagamento" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="status" className="mt-6">
+                <DashboardChart 
+                  data={aggregateStatusData(contracts)} 
+                  title="Distribuição por Status" 
+                />
+              </TabsContent>
+            </Tabs>
           </div>
 
           <div className="mb-8">
