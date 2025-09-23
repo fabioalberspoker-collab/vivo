@@ -259,6 +259,104 @@ export class GeminiService {
   }
 
   /**
+   * Analisa um único contrato e retorna resultado estruturado
+   */
+  async analyzeContract(contractText: string): Promise<ContractAnalysisResult> {
+    try {
+      console.log('🔍 Iniciando análise de contrato único');
+      
+      // Usar prompt especializado para contratos
+      const prompt = ContractPrompts.getContractAnalysisPrompt();
+      const fullPrompt = `${prompt}\n\n${contractText}`;
+
+      console.log(`📝 Prompt criado: ${fullPrompt.length} caracteres`);
+
+      // Chamar Gemini
+      const result = await this.generateContent(fullPrompt);
+      
+      if (result.error) {
+        console.error('❌ Erro na análise:', result.error);
+        throw new Error(result.error);
+      }
+
+      // Parse do resultado JSON
+      let analysisResult: ContractAnalysisResult;
+      
+      try {
+        // Limpar markdown se presente
+        let cleanText = result.text.trim();
+        if (cleanText.includes('```json')) {
+          cleanText = cleanText.split('```json')[1].split('```')[0].trim();
+        } else if (cleanText.includes('```')) {
+          cleanText = cleanText.split('```')[1].split('```')[0].trim();
+        }
+        
+        analysisResult = JSON.parse(cleanText);
+        console.log('✅ Análise concluída e parseada com sucesso');
+        
+      } catch (parseError) {
+        console.error('❌ Erro ao fazer parse do JSON:', parseError);
+        console.log('🔍 Resposta bruta:', result.text);
+        
+        // Fallback com análise básica
+        analysisResult = {
+          summary: "Erro no parse da análise. Revisar manualmente.",
+          keyTerms: {
+            parties: ["Análise indisponível"],
+            value: "Erro no parse",
+            startDate: "A definir",
+            endDate: "A definir",
+            duration: "A definir"
+          },
+          riskAnalysis: {
+            highRisk: ["Erro na análise automática"],
+            mediumRisk: [],
+            lowRisk: []
+          },
+          clauses: {
+            payment: ["Erro na análise"],
+            termination: ["Erro na análise"],
+            liability: ["Erro na análise"],
+            other: []
+          },
+          recommendations: ["Revisar contrato manualmente devido a erro na análise"],
+          score: 50
+        };
+      }
+
+      return analysisResult;
+
+    } catch (error) {
+      console.error('❌ Erro ao analisar contrato:', error);
+      
+      // Retornar análise de fallback
+      return {
+        summary: "Erro na análise do contrato. Revisar manualmente.",
+        keyTerms: {
+          parties: ["Erro na análise"],
+          value: "Erro na análise",
+          startDate: "A definir",
+          endDate: "A definir", 
+          duration: "A definir"
+        },
+        riskAnalysis: {
+          highRisk: ["Erro na análise automática - revisar manualmente"],
+          mediumRisk: [],
+          lowRisk: []
+        },
+        clauses: {
+          payment: ["Erro na análise"],
+          termination: ["Erro na análise"],
+          liability: ["Erro na análise"],
+          other: []
+        },
+        recommendations: ["Revisar contrato manualmente devido a erro na análise"],
+        score: 50
+      };
+    }
+  }
+
+  /**
    * Analisa documentos de contratos usando o prompt especializado
    */
   async analyzeContracts(documentsContent: string[]): Promise<GeminiResponse> {
