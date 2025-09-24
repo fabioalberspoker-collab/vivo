@@ -131,5 +131,30 @@ export const mockContracts: Contract[] = [
     flowType: 'Engenharia',
     region: 'Sul',
     state: 'PR'
+  },
+  // Contratos com vencimento próximo (menos de 30 dias) para testar o alerta
+  {
+    id: '11',
+    number: 'CT-2025-011',
+    supplier: 'Urgent Services Ltda',
+    type: 'Manutenção',
+    value: 75000,
+    status: 'pending',
+    dueDate: '2025-10-15', // Vence em aproximadamente 21 dias (assumindo data atual como setembro 2025)
+    flowType: 'RE',
+    region: 'Sudeste',
+    state: 'SP'
+  },
+  {
+    id: '12',
+    number: 'CT-2025-012',
+    supplier: 'Quick Fix Solutions',
+    type: 'Suporte',
+    value: 45000,
+    status: 'processing',
+    dueDate: '2025-10-08', // Vence em aproximadamente 14 dias
+    flowType: 'FI',
+    region: 'Norte',
+    state: 'AM'
   }
 ];

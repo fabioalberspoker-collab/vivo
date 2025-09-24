@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft, Eye, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from "recharts";
 import { ContractFromDB } from "@/domains/contracts/hooks/useContractFilters";
 
 interface ReportPageState {
@@ -24,6 +25,18 @@ interface ContractDetailModalProps {
 
 // Chart color palette
 const CHART_COLORS = ["#660099", "#9933CC", "#CC99FF", "#003366", "#FFCC00", "#66CC99"];
+
+// Helper function to check if contract expires within 30 days
+const isContractExpiringSoon = (expirationDate: string | null): boolean => {
+  if (!expirationDate) return false;
+  
+  const today = new Date();
+  const expDate = new Date(expirationDate);
+  const timeDiff = expDate.getTime() - today.getTime();
+  const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+  
+  return daysDiff > 0 && daysDiff <= 30;
+};
 
 // Helper functions for data aggregation
 const aggregateRiskData = (results: any[], contracts: ContractFromDB[]) => {
@@ -487,15 +500,42 @@ const Report = () => {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedContract({ contract, analysis: result })}
-                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                                title="Ver relatório completo"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center justify-center gap-1">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setSelectedContract({ contract, analysis: result })}
+                                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Ver relatório completo</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                {isContractExpiringSoon(contract.data_vencimento) && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="h-8 w-8 p-0 flex items-center justify-center">
+                                          <div className="h-5 w-5 bg-red-500 rounded-full flex items-center justify-center">
+                                            <AlertCircle className="h-3 w-3 text-white" />
+                                          </div>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Este contrato irá vencer em menos de 30 dias</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
