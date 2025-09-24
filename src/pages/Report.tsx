@@ -2,13 +2,12 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartContainer, ChartConfig } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
 import { ContractFromDB } from "@/hooks/useContractFilters";
 
 interface ReportPageState {
@@ -131,36 +130,32 @@ const aggregateStatusData = (contracts: ContractFromDB[]) => {
 
 // Chart component
 const DashboardChart = ({ data, title }: { data: any[], title: string }) => {
-  const config: ChartConfig = {};
-  
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold text-center mb-4 text-gray-800">{title}</h3>
-      <ChartContainer config={config} className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={120}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Pie>
-            <Tooltip 
-              formatter={(value: any) => [value, "Quantidade"]}
-              labelStyle={{ color: '#374151' }}
-              contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
-            />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </ChartContainer>
+      <div className="flex justify-center items-center h-[300px] w-full">
+        <PieChart width={350} height={300}>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={100}
+            paddingAngle={2}
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value: any) => [value, "Quantidade"]}
+            labelStyle={{ color: '#374151' }}
+            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
+          />
+          <Legend />
+        </PieChart>
+      </div>
     </Card>
   );
 };
@@ -185,6 +180,9 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({
               Score: {result.score || "N/A"}/100
             </Badge>
           </DialogTitle>
+          <DialogDescription>
+            Visualize o relatório detalhado de análise do contrato, incluindo informações do fornecedor, valor e resumo executivo gerado pela IA.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">

@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -374,6 +375,9 @@ const CreateFilterModal = ({ isOpen, onClose, onSave }: CreateFilterModalProps) 
       <DialogContent className="sm:max-w-[500px] bg-popover">
         <DialogHeader>
           <DialogTitle className="text-vivo-purple">Criar Novo Filtro</DialogTitle>
+          <DialogDescription>
+            Configure um novo filtro personalizado para analisar contratos. Defina os critérios de filtragem baseados nos campos disponíveis.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
