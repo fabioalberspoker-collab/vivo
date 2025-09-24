@@ -362,5 +362,5 @@ export const useContractFilters = () => {
     }
   };
 
-  return { contracts, isLoading, applyFilters };
+  return { contracts, isLoading, applyFilters, setContracts };
 };

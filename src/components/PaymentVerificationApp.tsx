@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import Header from "./Header";
@@ -17,11 +17,15 @@ import CreateFilterModal from "./CreateFilterModal";
 import CustomFilterRenderer from "./CustomFilterRenderer";
 import { useCustomFilters } from "@/hooks/useCustomFilters";
 import { useContractFilters, ContractFromDB } from "@/hooks/useContractFilters";
+import { useSmartContractAnalysis } from "@/hooks/useSmartContractAnalysis";
 
 const PaymentVerificationApp = () => {
   const { toast } = useToast();
   const { customFilters, addFilter, removeFilter, isLoading: filtersLoading } = useCustomFilters();
-  const { contracts, isLoading, applyFilters } = useContractFilters();
+  const { contracts, isLoading, applyFilters, setContracts } = useContractFilters();
+  
+  // Smart Contract Analysis Hook
+  const { selectRepresentativeSample, isAnalyzing, analysisStatus } = useSmartContractAnalysis();
   
   // Default filter states
   const [flowType, setFlowType] = useState<string[]>([]);
@@ -88,6 +92,62 @@ const PaymentVerificationApp = () => {
       toast({
         title: "Erro ao abrir documento",
         description: "Não foi possível abrir o documento. Verifique se a URL está válida.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  /**
+   * Função de Análise Inteligente de Contratos
+   * 
+   * FUNCIONALIDADE:
+   * - Utiliza IA para selecionar automaticamente uma amostra representativa
+   * - Garante diversidade máxima independente do tamanho da amostra
+   * - Atualiza a tabela de contratos filtrados com a seleção inteligente
+   * 
+   * CRITÉRIOS DE SELEÇÃO:
+   * - Região geográfica
+   * - Tipos de fluxo
+   * - Valores financeiros
+   * - Áreas responsáveis
+   * - Status dos contratos
+   * - Fornecedores
+   * - Datas de vencimento
+   * - Níveis de risco
+   */
+  const handleSmartAnalysis = async () => {
+    try {
+      // Usar a quantidade de contratos definida pelo usuário
+      const targetSampleSize = contractCount;
+      
+      // Chamar a IA para seleção representativa
+      const selectedContracts = await selectRepresentativeSample(targetSampleSize);
+      
+      if (selectedContracts.length > 0) {
+        // Atualizar a tabela de contratos filtrados com a seleção inteligente da IA
+        setContracts(selectedContracts);
+        
+        toast({
+          title: "Análise Inteligente Concluída!",
+          description: `${selectedContracts.length} contratos selecionados com máxima diversidade`,
+          variant: "default"
+        });
+        
+        console.log('📊 Contratos selecionados pela IA:', selectedContracts);
+        
+      } else {
+        toast({
+          title: "Nenhum Contrato Selecionado",
+          description: "A IA não conseguiu selecionar contratos. Verifique a base de dados.",
+          variant: "destructive"
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro na análise inteligente:', error);
+      toast({
+        title: "Erro na Análise",
+        description: "Houve um problema durante a seleção inteligente de contratos",
         variant: "destructive"
       });
     }
@@ -219,11 +279,42 @@ const PaymentVerificationApp = () => {
               {isLoading ? "Aplicando..." : "Aplicar Filtros"}
             </Button>
             
+            {/* Botão de Análise Inteligente - Seleção Representativa por IA */}
+            <Button 
+              onClick={handleSmartAnalysis} 
+              variant="default"
+              disabled={isAnalyzing || isLoading || filtersLoading}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Analisando...
+                </>
+              ) : (
+                <>
+                  <Brain className="h-4 w-4" />
+                  Analisar Melhor Amostra
+                </>
+              )}
+            </Button>
+            
             <Button onClick={resetFilters} variant="outline">
               Limpar Filtros
             </Button>
           </div>
         </div>
+        
+        {/* Status da Análise Inteligente */}
+        {isAnalyzing && analysisStatus && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+              <span className="text-purple-800 font-medium">Análise Inteligente em Andamento</span>
+            </div>
+            <p className="text-purple-600 text-sm mt-2">{analysisStatus}</p>
+          </div>
+        )}
         
         {/* Results Table */}
         <div className="space-y-4">

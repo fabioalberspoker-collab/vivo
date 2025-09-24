@@ -126,7 +126,7 @@ export class SupabaseStorageService {
         if (actualBucket !== 'contratos') {
           console.log('🔄 Tentando com bucket "contratos"...');
           const { data: data2, error: error2 } = await supabase.storage
-            .from('contratos')
+            .from('contracts')
             .download(actualPath);
             
           if (!error2 && data2) {
