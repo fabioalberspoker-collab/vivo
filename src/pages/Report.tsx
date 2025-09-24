@@ -38,6 +38,28 @@ const isContractExpiringSoon = (expirationDate: string | null): boolean => {
   return daysDiff > 0 && daysDiff <= 30;
 };
 
+// Helper function to calculate penalty (10% of contract value)
+const calculatePenalty = (contractValue: number): number => {
+  return contractValue * 0.1;
+};
+
+// Helper function to get risk badge with color
+const getRiskBadge = (risk: string) => {
+  const riskMap: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline', className: string }> = {
+    'Alto': { variant: 'destructive', className: 'bg-red-100 text-red-800' },
+    'Médio': { variant: 'outline', className: 'bg-yellow-100 text-yellow-800' },
+    'Baixo': { variant: 'secondary', className: 'bg-green-100 text-green-800' }
+  };
+  
+  const riskInfo = riskMap[risk] || { variant: 'outline' as const, className: 'bg-gray-100 text-gray-800' };
+  
+  return (
+    <Badge variant={riskInfo.variant} className={riskInfo.className}>
+      {risk || 'N/A'}
+    </Badge>
+  );
+};
+
 // Helper functions for data aggregation
 const aggregateRiskData = (results: any[], contracts: ContractFromDB[]) => {
   const riskCounts = { "Baixo Risco": 0, "Médio Risco": 0, "Alto Risco": 0 };
@@ -427,6 +449,9 @@ const Report = () => {
                       <TableHead>Valor de Pagamento</TableHead>
                       <TableHead>Região</TableHead>
                       <TableHead>Estado</TableHead>
+                      <TableHead>Área Responsável</TableHead>
+                      <TableHead>Risco</TableHead>
+                      <TableHead>Multa (10%)</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Data de Vencimento</TableHead>
                       <TableHead>Score IA</TableHead>
@@ -464,7 +489,7 @@ const Report = () => {
                           return (
                             <TableRow key={result.contractId || index} className="bg-red-50">
                               <TableCell className="font-mono">{contract.numero_contrato}</TableCell>
-                              <TableCell colSpan={9} className="text-red-600">
+                              <TableCell colSpan={12} className="text-red-600">
                                 <strong>Erro:</strong> {result.error || "Erro desconhecido"}
                               </TableCell>
                               <TableCell className="text-center">
@@ -488,6 +513,13 @@ const Report = () => {
                             </TableCell>
                             <TableCell>{contract.regiao}</TableCell>
                             <TableCell>{contract.estado}</TableCell>
+                            <TableCell>{contract.area_responsavel || "N/A"}</TableCell>
+                            <TableCell>
+                              {getRiskBadge(contract.risco || "N/A")}
+                            </TableCell>
+                            <TableCell className="font-medium text-orange-600">
+                              R$ {calculatePenalty(contract.valor_contrato || 0).toLocaleString("pt-BR")}
+                            </TableCell>
                             <TableCell>
                               {getStatusBadge(contract.status || "Não Informado")}
                             </TableCell>
