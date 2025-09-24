@@ -73,20 +73,6 @@ const aggregateAreaData = (contracts: ContractFromDB[]) => {
   }));
 };
 
-const aggregatePaymentStatusData = (contracts: ContractFromDB[]) => {
-  const statusCounts: Record<string, number> = {};
-  contracts.forEach(contract => {
-    const status = contract.status || "Não Informado";
-    statusCounts[status] = (statusCounts[status] || 0) + 1;
-  });
-
-  return Object.entries(statusCounts).map(([name, value], index) => ({
-    name,
-    value,
-    fill: CHART_COLORS[index % CHART_COLORS.length]
-  }));
-};
-
 const aggregateValueRanges = (contracts: ContractFromDB[], valueField: 'valor_contrato' | 'valor_pagamento') => {
   const ranges = {
     "0 - 10k": 0,
@@ -353,17 +339,14 @@ const Report = () => {
                   <TabsTrigger value="areas" className="w-full justify-start text-left px-4 py-3">
                     🏢 Áreas
                   </TabsTrigger>
-                  <TabsTrigger value="payment" className="w-full justify-start text-left px-4 py-3">
-                    💰 Pagamento
+                  <TabsTrigger value="status" className="w-full justify-start text-left px-4 py-3">
+                    📊 Status dos Contratos
                   </TabsTrigger>
                   <TabsTrigger value="contract-values" className="w-full justify-start text-left px-4 py-3">
                     📈 Valores Contrato
                   </TabsTrigger>
                   <TabsTrigger value="payment-values" className="w-full justify-start text-left px-4 py-3">
                     💵 Valores Pagamento
-                  </TabsTrigger>
-                  <TabsTrigger value="status" className="w-full justify-start text-left px-4 py-3">
-                    ✅ Status
                   </TabsTrigger>
                 </TabsList>
                 
@@ -389,10 +372,10 @@ const Report = () => {
                     />
                   </TabsContent>
                   
-                  <TabsContent value="payment" className="mt-0">
+                  <TabsContent value="status" className="mt-0">
                     <DashboardChart 
-                      data={aggregatePaymentStatusData(contracts)} 
-                      title="Distribuição por Status de Pagamento" 
+                      data={aggregateStatusData(contracts)} 
+                      title="Distribuição por Status dos Contratos" 
                     />
                   </TabsContent>
                   
@@ -407,13 +390,6 @@ const Report = () => {
                     <DashboardChart 
                       data={aggregateValueRanges(contracts, 'valor_pagamento')} 
                       title="Distribuição por Faixa de Valor de Pagamento" 
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="status" className="mt-0">
-                    <DashboardChart 
-                      data={aggregateStatusData(contracts)} 
-                      title="Distribuição por Status" 
                     />
                   </TabsContent>
                 </div>
@@ -453,7 +429,7 @@ const Report = () => {
                       if (!contract && result.contractId) {
                         contract = {
                           numero_contrato: result.contractId,
-                          fornecedor: 'Fornecedor n�o identificado',
+                          fornecedor: 'Fornecedor não identificado',
                           tipo_fluxo: 'N/A',
                           valor_contrato: 0,
                           valor_pagamento: 0,
@@ -468,7 +444,7 @@ const Report = () => {
                         } as ContractFromDB;
                       }
                       
-                      // Mostrar linha para an�lises bem-sucedidas OU com erro
+                      // Mostrar linha para análises bem-sucedidas OU com erro
                       if (contract && (result.analysis || result.error)) {
                         // Se tem erro, mostrar linha de erro
                         if (result.error) {
@@ -485,7 +461,7 @@ const Report = () => {
                           );
                         }
                         
-                        // Linha normal para an�lises bem-sucedidas
+                        // Linha normal para análises bem-sucedidas
                         return (
                           <TableRow key={contract.numero_contrato || index}>
                             <TableCell className="font-mono">{contract.numero_contrato}</TableCell>
@@ -500,7 +476,7 @@ const Report = () => {
                             <TableCell>{contract.regiao}</TableCell>
                             <TableCell>{contract.estado}</TableCell>
                             <TableCell>
-                              {getStatusBadge(contract.status || "N�o Informado")}
+                              {getStatusBadge(contract.status || "Não Informado")}
                             </TableCell>
                             <TableCell>
                               {contract.data_vencimento ? new Date(contract.data_vencimento).toLocaleDateString("pt-BR") : "N/A"}
@@ -516,7 +492,7 @@ const Report = () => {
                                 size="sm"
                                 onClick={() => setSelectedContract({ contract, analysis: result })}
                                 className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                                title="Ver relat�rio completo"
+                                title="Ver relatório completo"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -540,8 +516,8 @@ const Report = () => {
           />
 
           <div className="text-center pt-6 border-t border-gray-200 text-gray-600">
-            <p>Relat�rio gerado automaticamente pelo sistema Vivo Contract Insight</p>
-            <p className="text-sm">An�lise realizada com tecnologia de IA Gemini</p>
+            <p>Relatório gerado automaticamente pelo sistema Vivo Contract Insight</p>
+            <p className="text-sm">Análise realizada com tecnologia de IA Gemini</p>
           </div>
         </div>
       </div>
