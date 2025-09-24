@@ -23,7 +23,7 @@ interface ContractDetailModalProps {
 }
 
 // Chart color palette
-const CHART_COLORS = ["#660099", "#004fd0", "#0078ec", "#0099ee", "#00b7da", "#00d1bc"];
+const CHART_COLORS = ["#660099", "#9933CC", "#CC99FF", "#003366", "#FFCC00", "#66CC99"];
 
 // Helper functions for data aggregation
 const aggregateRiskData = (results: any[], contracts: ContractFromDB[]) => {
@@ -128,16 +128,49 @@ const aggregateStatusData = (contracts: ContractFromDB[]) => {
   }));
 };
 
+// Function to format status badges with colors
+const getStatusBadge = (status: string) => {
+  // Normalizar o status removendo espaços extras e convertendo para minúsculas
+  const normalizedStatus = status?.trim().toLowerCase();
+  
+  const statusConfig: Record<string, { label: string; variant: 'default' | 'destructive' | 'secondary' | 'outline'; className: string }> = {
+    // Status existentes com cores personalizadas (case-insensitive)
+    'pendente': { label: 'Pendente', variant: 'default', className: 'bg-yellow-500 text-white' },
+    'rejeitado': { label: 'Rejeitado', variant: 'destructive', className: 'bg-red-500 text-white' },
+    'aprovado em massa': { label: 'Aprovado em Massa', variant: 'default', className: 'bg-green-500 text-white' },
+    'aprovado com análise': { label: 'Aprovado com Análise', variant: 'default', className: 'bg-green-600 text-white' },
+    'aprovado com analise': { label: 'Aprovado com Análise', variant: 'default', className: 'bg-green-600 text-white' },
+    'aprovado': { label: 'Aprovado', variant: 'default', className: 'bg-green-500 text-white' },
+    
+    // Status padrões mantidos
+    'pago': { label: 'Pago', variant: 'default', className: 'bg-blue-500 text-white' },
+    'vencido': { label: 'Vencido', variant: 'destructive', className: 'bg-red-600 text-white' },
+    'processando': { label: 'Processando', variant: 'default', className: 'bg-purple-500 text-white' },
+    'em análise': { label: 'Em Análise', variant: 'secondary', className: 'bg-gray-500 text-white' },
+    'em analise': { label: 'Em Análise', variant: 'secondary', className: 'bg-gray-500 text-white' },
+    'cancelado': { label: 'Cancelado', variant: 'secondary', className: 'bg-gray-600 text-white' },
+    'suspenso': { label: 'Suspenso', variant: 'default', className: 'bg-orange-500 text-white' },
+    'em processamento': { label: 'Em Processamento', variant: 'default', className: 'bg-purple-500 text-white' }
+  };
+
+  const config = statusConfig[normalizedStatus] || { label: status, variant: 'outline' as const, className: 'bg-gray-200 text-gray-800' };
+  return (
+    <Badge variant={config.variant} className={config.className}>
+      {config.label}
+    </Badge>
+  );
+};
+
 // Chart component
 const DashboardChart = ({ data, title }: { data: any[], title: string }) => {
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold text-center mb-4 text-gray-800">{title}</h3>
       <div className="flex justify-center items-center h-[300px] w-full">
-        <PieChart width={350} height={300}>
+        <PieChart width={500} height={300}>
           <Pie
             data={data}
-            cx="50%"
+            cx="40%"
             cy="50%"
             innerRadius={60}
             outerRadius={100}
@@ -153,7 +186,13 @@ const DashboardChart = ({ data, title }: { data: any[], title: string }) => {
             labelStyle={{ color: '#374151' }}
             contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
           />
-          <Legend />
+          <Legend 
+            verticalAlign="middle" 
+            align="right"
+            layout="vertical"
+            iconType="circle"
+            wrapperStyle={{ paddingLeft: '20px' }}
+          />
         </PieChart>
       </div>
     </Card>
@@ -461,20 +500,7 @@ const Report = () => {
                             <TableCell>{contract.regiao}</TableCell>
                             <TableCell>{contract.estado}</TableCell>
                             <TableCell>
-                              <Badge 
-                                variant={
-                                  contract.status === "Pago" ? "default" :
-                                  contract.status === "Pendente" ? "secondary" :
-                                  contract.status === "Vencido" ? "destructive" : "outline"
-                                }
-                                className={
-                                  contract.status === "Pago" ? "bg-green-500 text-white" :
-                                  contract.status === "Pendente" ? "bg-yellow-500 text-white" :
-                                  contract.status === "Vencido" ? "bg-red-500 text-white" : "bg-gray-200 text-gray-800"
-                                }
-                              >
-                                {contract.status}
-                              </Badge>
+                              {getStatusBadge(contract.status || "Não Informado")}
                             </TableCell>
                             <TableCell>
                               {contract.data_vencimento ? new Date(contract.data_vencimento).toLocaleDateString("pt-BR") : "N/A"}
