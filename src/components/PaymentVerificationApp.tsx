@@ -98,20 +98,14 @@ const PaymentVerificationApp = () => {
   };
 
   /**
-   * Função de Análise Inteligente de Contratos
+   * Análise Inteligente de Contratos com Filtros Contextuais
    * 
-   * FUNCIONALIDADE:
-   * - Utiliza IA para selecionar automaticamente uma amostra representativa
-   * - Garante diversidade máxima independente do tamanho da amostra
-   * - Atualiza a tabela de contratos filtrados com a seleção inteligente
+   * A IA considera os filtros ativos do usuário para selecionar uma amostra representativa
+   * apenas dos contratos que atendem aos critérios especificados.
    * 
-   * CRITÉRIOS DE SELEÇÃO:
-   * - Região geográfica
-   * - Tipos de fluxo
-   * - Valores financeiros
-   * - Áreas responsáveis
-   * - Status dos contratos
-   * - Fornecedores
+   * Critérios de diversidade considerados:
+   * - Fornecedores e regiões
+   * - Tipos de fluxo e valores
    * - Datas de vencimento
    * - Níveis de risco
    */
@@ -120,16 +114,45 @@ const PaymentVerificationApp = () => {
       // Usar a quantidade de contratos definida pelo usuário
       const targetSampleSize = contractCount;
       
-      // Chamar a IA para seleção representativa
-      const selectedContracts = await selectRepresentativeSample(targetSampleSize);
+      // Construir objeto de filtros ativos baseado nos states atuais
+      const activeFilters = {
+        supplier: selectedStates, // Assumindo que selectedStates representa fornecedores selecionados
+        location: selectedStates,
+        flowType: flowType,
+        dueDate: dueDate ? {
+          start: customStart || undefined,
+          end: customEnd || undefined
+        } : undefined,
+        contractValue: (contractValue[0] > 0 || contractValue[1] < 10000000) ? {
+          min: contractValue[0],
+          max: contractValue[1]
+        } : undefined
+      };
+      
+      // Verificar se há filtros ativos
+      const hasActiveFilters = Object.values(activeFilters).some(filter => 
+        Array.isArray(filter) ? filter.length > 0 : 
+        filter && typeof filter === 'object' ? Object.values(filter).some(v => v !== null && v !== undefined) :
+        filter !== null && filter !== undefined
+      );
+      
+      // Chamar a IA para seleção representativa (com ou sem filtros)
+      const selectedContracts = await selectRepresentativeSample(
+        targetSampleSize, 
+        hasActiveFilters ? activeFilters : undefined
+      );
       
       if (selectedContracts.length > 0) {
         // Atualizar a tabela de contratos filtrados com a seleção inteligente da IA
         setContracts(selectedContracts);
         
+        const successMessage = hasActiveFilters 
+          ? `${selectedContracts.length} contratos selecionados considerando filtros ativos`
+          : `${selectedContracts.length} contratos selecionados com máxima diversidade`;
+        
         toast({
           title: "Análise Inteligente Concluída!",
-          description: `${selectedContracts.length} contratos selecionados com máxima diversidade`,
+          description: successMessage,
           variant: "default"
         });
         

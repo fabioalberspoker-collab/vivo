@@ -4,8 +4,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { ContractFromDB } from '@/hooks/useContractFilters';
 
 /**
+ * Interface para os filtros contextuais aplicados pelo usuário
+ */
+export interface FilterState {
+  supplier?: string[];
+  location?: string[];
+  flowType?: string[];
+  dueDate?: {
+    start?: string;
+    end?: string;
+  };
+  contractValue?: {
+    min: number | null;
+    max: number | null;
+  };
+}
+
+/**
  * Hook para seleção inteligente de contratos representativos
  * Utiliza algoritmo de diversidade máxima para garantir amostragem equilibrada
+ * Considera filtros ativos do usuário para análise contextual
  */
 export const useSmartContractAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -13,54 +31,117 @@ export const useSmartContractAnalysis = () => {
   const { toast } = useToast();
 
   /**
-   * Algoritmo de Seleção Representativa
+   * Função auxiliar para aplicar filtros à query do Supabase
+   * Reutiliza a mesma lógica de filtros já existente na aplicação
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applyFiltersToQuery = (query: any, filters: FilterState) => {
+    // Filtro de Fornecedor
+    if (filters.supplier && filters.supplier.length > 0) {
+      query = query.in('fornecedor', filters.supplier);
+    }
+
+    // Filtro de Localização
+    if (filters.location && filters.location.length > 0) {
+      query = query.in('localizacao', filters.location);
+    }
+
+    // Filtro de Tipo de Fluxo
+    if (filters.flowType && filters.flowType.length > 0) {
+      query = query.in('tipo_fluxo', filters.flowType);
+    }
+
+    // Filtro de Data de Vencimento
+    if (filters.dueDate && filters.dueDate.start) {
+      query = query.gte('data_vencimento', filters.dueDate.start);
+    }
+    if (filters.dueDate && filters.dueDate.end) {
+      query = query.lte('data_vencimento', filters.dueDate.end);
+    }
+
+    // Filtro de Valor do Contrato
+    if (filters.contractValue && filters.contractValue.min !== null) {
+      query = query.gte('valor_contrato', filters.contractValue.min);
+    }
+    if (filters.contractValue && filters.contractValue.max !== null) {
+      query = query.lte('valor_contrato', filters.contractValue.max);
+    }
+
+    return query;
+  };
+
+  /**
+   * Algoritmo de Seleção Representativa com Filtros Contextuais
    * 
-   * OBJETIVO: Garantir máxima diversidade na amostra independente do tamanho
+   * OBJETIVO: Garantir máxima diversidade na amostra considerando filtros ativos
    * 
    * ESTRATÉGIA:
    * 1. Coleta todos os contratos da base
-   * 2. Categoriza por critérios de diversidade (região, tipo, valores, etc.)
-   * 3. Distribui proporcionalmente a seleção entre categorias
-   * 4. Aplica algoritmo de distância euclidiana para evitar duplicatas similares
-   * 5. Prioriza contratos únicos em categorias sub-representadas
+   * 2. Aplica filtros selecionados pelo usuário (se houver)
+   * 3. Categoriza por critérios de diversidade (região, tipo, valores, etc.)
+   * 4. Distribui proporcionalmente a seleção entre categorias
+   * 5. Aplica algoritmo de distância euclidiana para evitar duplicatas similares
+   * 6. Prioriza contratos únicos em categorias sub-representadas
    */
-  const selectRepresentativeSample = async (targetSize: number): Promise<ContractFromDB[]> => {
+  const selectRepresentativeSample = async (
+    targetSize: number, 
+    filters?: FilterState
+  ): Promise<ContractFromDB[]> => {
     setIsAnalyzing(true);
-    setAnalysisStatus('🔍 Coletando todos os contratos da base...');
+    const hasFilters = filters && Object.values(filters).some(filter => 
+      Array.isArray(filter) ? filter.length > 0 : filter !== null && filter !== undefined && filter !== ''
+    );
+    
+    setAnalysisStatus(hasFilters ? 
+      '🔍 Coletando contratos aplicando filtros ativos...' : 
+      '🔍 Coletando todos os contratos da base...'
+    );
 
     try {
       // 1. Buscar todos os contratos da base
-      const { data: allContracts, error } = await supabase
-        .from('contracts')
-        .select('*');
+      let query = supabase.from('contracts').select('*');
+      
+      // 2. Aplicar filtros se fornecidos
+      if (hasFilters && filters) {
+        query = applyFiltersToQuery(query, filters);
+      }
+      
+      const { data: contractsData, error } = await query;
 
       if (error) {
         throw new Error(`Erro ao acessar base de dados: ${error.message}`);
       }
 
-      if (!allContracts || allContracts.length === 0) {
-        throw new Error('Nenhum contrato encontrado na base de dados');
+      if (!contractsData || contractsData.length === 0) {
+        const filterMsg = hasFilters ? ' (com filtros aplicados)' : '';
+        throw new Error(`Nenhum contrato encontrado na base de dados${filterMsg}`);
       }
 
-      setAnalysisStatus('🧠 IA analisando diversidade de critérios...');
+      const analysisMsg = hasFilters ? 
+        `🧠 IA analisando ${contractsData.length} contratos filtrados...` : 
+        `🧠 IA analisando ${contractsData.length} contratos da base...`;
+      setAnalysisStatus(analysisMsg);
 
       // 2. Análise de Diversidade - Categorizar contratos por critérios
-      const diversityAnalysis = analyzeDiversityCriteria(allContracts);
+      const diversityAnalysis = analyzeDiversityCriteria(contractsData);
       
       setAnalysisStatus('📊 Calculando distribuição representativa...');
 
       // 3. Seleção Inteligente baseada em representatividade
       const selectedContracts = performIntelligentSelection(
-        allContracts,
+        contractsData,
         diversityAnalysis,
         targetSize
       );
 
+      const resultMsg = hasFilters ? 
+        `${selectedContracts.length} contratos selecionados considerando filtros ativos` :
+        `${selectedContracts.length} contratos selecionados com máxima diversidade`;
       setAnalysisStatus('✅ Amostra representativa selecionada com sucesso!');
 
       toast({
         title: "Análise Inteligente Concluída",
-        description: `${selectedContracts.length} contratos selecionados com máxima diversidade`,
+        description: resultMsg,
         variant: "default"
       });
 
