@@ -1,14 +1,14 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { ArrowLeft, Eye } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Badge } from "@/shared/components/ui/badge";
+import { Card } from "@/shared/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
-import { ContractFromDB } from "@/hooks/useContractFilters";
+import { ContractFromDB } from "@/domains/contracts/hooks/useContractFilters";
 
 interface ReportPageState {
   results: any;
@@ -214,7 +214,7 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span> Relatório Completo - Contrato {contract.numero_contrato}</span>
+            <span>📊 Relatório Completo - Contrato {contract.numero_contrato}</span>
             <Badge variant="outline" className="bg-blue-100 text-blue-800">
               Score: {result.score || "N/A"}/100
             </Badge>
@@ -278,7 +278,7 @@ const Report = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg text-gray-600 mb-4">Carregando relatório...</p>
+          <p className="text-lg text-gray-600 mb-4">⏳ Carregando relatório...</p>
           <Button onClick={handleGoBack} variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar para Filtros
@@ -303,7 +303,7 @@ const Report = () => {
               Voltar para Filtros
             </Button>
             <h1 className="text-xl font-bold text-purple-600">
-              Relatório de Análise de Contratos
+              📊 Relatório de Análise de Contratos
             </h1>
           </div>
         </div>
@@ -313,22 +313,22 @@ const Report = () => {
         <div className="bg-white rounded-lg shadow-sm p-8">
           <div className="text-center border-b border-gray-200 pb-6 mb-8">
             <h1 className="text-3xl font-bold text-purple-600 mb-2">
-               Relatório de Análise de Contratos
+              📊 Relatório de Análise de Contratos
             </h1>
             <p className="text-gray-600">Gerado em: {timestamp}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-600">
-              <h3 className="font-semibold text-gray-700 mb-2">🔸 Total de Contratos</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">📋 Total de Contratos</h3>
               <p className="text-3xl font-bold text-purple-600">{contracts.length}</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-green-500">
-              <h3 className="font-semibold text-gray-700 mb-2">🔸 Análises Realizadas</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">🔍 Análises Realizadas</h3>
               <p className="text-3xl font-bold text-green-600">{totalAnalyzed}</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-blue-500">
-              <h3 className="font-semibold text-gray-700 mb-2">🔸 Taxa de Sucesso</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">✅ Taxa de Sucesso</h3>
               <p className={`text-3xl font-bold ${successfulAnalyses === totalAnalyzed ? "text-green-600" : "text-yellow-600"}`}>
                 {Math.round((successfulAnalyses / totalAnalyzed) * 100)}%
               </p>
@@ -345,25 +345,25 @@ const Report = () => {
               <div className="flex gap-6">
                 <TabsList className="flex flex-col h-fit w-48 bg-gray-50">
                   <TabsTrigger value="risk" className="w-full justify-start text-left px-4 py-3">
-                    🎯 Riscos
+                    ⚠️ Riscos
                   </TabsTrigger>
                   <TabsTrigger value="types" className="w-full justify-start text-left px-4 py-3">
-                    📋 Tipos
+                    📄 Tipos
                   </TabsTrigger>
                   <TabsTrigger value="areas" className="w-full justify-start text-left px-4 py-3">
                     🏢 Áreas
                   </TabsTrigger>
                   <TabsTrigger value="payment" className="w-full justify-start text-left px-4 py-3">
-                    💳 Pagamento
+                    💰 Pagamento
                   </TabsTrigger>
                   <TabsTrigger value="contract-values" className="w-full justify-start text-left px-4 py-3">
-                    💰 Valores Contrato
+                    📈 Valores Contrato
                   </TabsTrigger>
                   <TabsTrigger value="payment-values" className="w-full justify-start text-left px-4 py-3">
                     💵 Valores Pagamento
                   </TabsTrigger>
                   <TabsTrigger value="status" className="w-full justify-start text-left px-4 py-3">
-                    📊 Status
+                    ✅ Status
                   </TabsTrigger>
                 </TabsList>
                 
@@ -423,7 +423,7 @@ const Report = () => {
 
           <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-300">
-               Contratos Analisados
+              📋 Contratos Analisados
             </h2>
             
             <Card className="overflow-hidden">
@@ -453,7 +453,7 @@ const Report = () => {
                       if (!contract && result.contractId) {
                         contract = {
                           numero_contrato: result.contractId,
-                          fornecedor: 'Fornecedor não identificado',
+                          fornecedor: 'Fornecedor n�o identificado',
                           tipo_fluxo: 'N/A',
                           valor_contrato: 0,
                           valor_pagamento: 0,
@@ -468,7 +468,7 @@ const Report = () => {
                         } as ContractFromDB;
                       }
                       
-                      // Mostrar linha para análises bem-sucedidas OU com erro
+                      // Mostrar linha para an�lises bem-sucedidas OU com erro
                       if (contract && (result.analysis || result.error)) {
                         // Se tem erro, mostrar linha de erro
                         if (result.error) {
@@ -485,7 +485,7 @@ const Report = () => {
                           );
                         }
                         
-                        // Linha normal para análises bem-sucedidas
+                        // Linha normal para an�lises bem-sucedidas
                         return (
                           <TableRow key={contract.numero_contrato || index}>
                             <TableCell className="font-mono">{contract.numero_contrato}</TableCell>
@@ -500,7 +500,7 @@ const Report = () => {
                             <TableCell>{contract.regiao}</TableCell>
                             <TableCell>{contract.estado}</TableCell>
                             <TableCell>
-                              {getStatusBadge(contract.status || "Não Informado")}
+                              {getStatusBadge(contract.status || "N�o Informado")}
                             </TableCell>
                             <TableCell>
                               {contract.data_vencimento ? new Date(contract.data_vencimento).toLocaleDateString("pt-BR") : "N/A"}
@@ -516,7 +516,7 @@ const Report = () => {
                                 size="sm"
                                 onClick={() => setSelectedContract({ contract, analysis: result })}
                                 className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                                title="Ver relatório completo"
+                                title="Ver relat�rio completo"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -540,8 +540,8 @@ const Report = () => {
           />
 
           <div className="text-center pt-6 border-t border-gray-200 text-gray-600">
-            <p>Relatório gerado automaticamente pelo sistema Vivo Contract Insight</p>
-            <p className="text-sm">Análise realizada com tecnologia de IA Gemini</p>
+            <p>Relat�rio gerado automaticamente pelo sistema Vivo Contract Insight</p>
+            <p className="text-sm">An�lise realizada com tecnologia de IA Gemini</p>
           </div>
         </div>
       </div>

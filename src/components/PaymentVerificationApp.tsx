@@ -1,23 +1,23 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { Plus, Brain, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/shared/hooks/use-toast";
 
-import Header from "./Header";
-import FilterContainer from "./FilterContainer";
-import FlowTypeFilter from "./filters/FlowTypeFilter";
-import ValueRangeFilter from "./filters/ValueRangeFilter";
-import LocationFilter from "./filters/LocationFilter";
-import DueDateFilter from "./filters/DueDateFilter";
-import SupplierFilter from "./filters/SupplierFilter";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import ContractsTable from "./ContractsTable";
-import CreateFilterModal from "./CreateFilterModal";
-import CustomFilterRenderer from "./CustomFilterRenderer";
-import { useCustomFilters } from "@/hooks/useCustomFilters";
-import { useContractFilters, ContractFromDB } from "@/hooks/useContractFilters";
-import { useSmartContractAnalysis } from "@/hooks/useSmartContractAnalysis";
+import Header from "@/shared/components/Header";
+import FilterContainer from "@/domains/filters/components/FilterContainer";
+import FlowTypeFilter from "@/domains/filters/components/filters/FlowTypeFilter";
+import ValueRangeFilter from "@/domains/filters/components/filters/ValueRangeFilter";
+import LocationFilter from "@/domains/filters/components/filters/LocationFilter";
+import DueDateFilter from "@/domains/filters/components/filters/DueDateFilter";
+import SupplierFilter from "@/domains/filters/components/filters/SupplierFilter";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import ContractsTable from "@/domains/contracts/components/ContractsTable";
+import CreateFilterModal from "@/domains/filters/components/CreateFilterModal";
+import CustomFilterRenderer from "@/domains/filters/components/CustomFilterRenderer";
+import { useCustomFilters } from "@/domains/filters/hooks/useCustomFilters";
+import { useContractFilters, ContractFromDB } from "@/domains/contracts/hooks/useContractFilters";
+import { useSmartContractAnalysis } from "@/domains/analytics/hooks/useSmartContractAnalysis";
 
 const PaymentVerificationApp = () => {
   const { toast } = useToast();
