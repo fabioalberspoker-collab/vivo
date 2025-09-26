@@ -13,7 +13,7 @@ async function callAIToInferFilterType(samples: any[]): Promise<{ tipo_filtro: s
   // Monta o prompt para o Gemini
   const prompt = `Você é um assistente para criação de filtros em sistemas de BI. Analise os seguintes exemplos de dados de uma coluna e retorne um JSON no formato:\n{\n  "tipo_filtro": "texto|range|numérico|data|booleano|categoria|multiselect",\n  "configuracoes": { /* parâmetros relevantes */ }\n}\nApenas o JSON, sem explicações.\nAmostras: ${JSON.stringify(samples.slice(0, 20))}`;
 
-  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=' + apiKey, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

@@ -132,7 +132,7 @@ app.post('/api/createCustomFilter', asyncHandler(async (req: Request<Record<stri
 
   try {
     console.log('Creating Gemini model...');
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
     console.log('Created Gemini model');
     
     // Load prompt template from file

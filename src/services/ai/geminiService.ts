@@ -1,6 +1,8 @@
 // Serviço para integração com Google Gemini API
 // Este arquivo contém todas as funções necessárias para comunicação com a IA Gemini
 
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+
 export interface GeminiConfig {
   apiKey: string;
   model?: string;
@@ -174,12 +176,20 @@ Analise a seguinte seção do contrato:`;
 
 export class GeminiService {
   private apiKey: string;
-  private model: string;
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+  private model: GenerativeModel;
 
   constructor(config: GeminiConfig) {
     this.apiKey = config.apiKey;
-    this.model = config.model || 'gemini-1.5-flash';
+    
+    // Use the same approach as ContractReader
+    const genAI = new GoogleGenerativeAI(this.apiKey);
+    this.model = genAI.getGenerativeModel({
+      model: config.model || 'gemini-2.0-flash-001',
+      generationConfig: {
+        temperature: config.temperature || 0.1,
+        maxOutputTokens: config.maxTokens || 2048,
+      }
+    });
   }
 
   /**
@@ -190,95 +200,39 @@ export class GeminiService {
     const baseDelay = 2000; // Aumentado para 2 segundos
     
     try {
-      const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`;
+      console.log(`🤖 Chamando Gemini API (tentativa ${retryCount + 1}/${maxRetries + 1})`);
       
-      console.log(`🤖 Chamando Gemini API (tentativa ${retryCount + 1}/${maxRetries + 1}):`, url);
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 8192,
-          },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH", 
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            }
-          ]
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Resposta da API Gemini:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
-        });
-
-        // Se for erro 503 (modelo sobrecarregado) ou 429 (rate limit) e ainda temos tentativas, fazer retry
-        if ((response.status === 503 || response.status === 429) && retryCount < maxRetries) {
-          const delay = baseDelay * Math.pow(2, retryCount); // Backoff exponencial
-          console.log(`⏳ Serviço temporariamente indisponível (${response.status}). Tentando novamente em ${delay}ms... (${retryCount + 1}/${maxRetries})`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return this.generateContent(prompt, retryCount + 1);
-        }
-
-        throw new Error(`Erro na API Gemini: ${response.status} ${response.statusText}. Detalhes: ${errorText}`);
-      }
-
-      const data = await response.json();
+      console.log('✅ Resposta recebida da API Gemini');
       
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-        console.log('✅ Resposta recebida do Gemini com sucesso');
-        return {
-          text: data.candidates[0].content.parts[0].text
-        };
-      } else {
-        throw new Error('Resposta inválida da API Gemini');
-      }
+      return {
+        text: text
+      };
 
     } catch (error) {
-      console.error('Erro ao chamar Gemini API:', error);
+      console.error('❌ Erro na API Gemini:', error);
       
-      // Se for erro de rede ou timeout e ainda temos tentativas, fazer retry
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      
+      // Retry em caso de rate limiting ou erro temporário
       if (retryCount < maxRetries && (
-        error instanceof TypeError || // Erro de rede
-        (error instanceof Error && error.message.includes('fetch'))
+        errorMessage.includes('429') || 
+        errorMessage.includes('quota') || 
+        errorMessage.includes('rate limit') ||
+        errorMessage.includes('503')
       )) {
-        const delay = baseDelay * Math.pow(2, retryCount);
-        console.log(`⏳ Erro de rede. Tentando novamente em ${delay}ms...`);
+        const delay = Math.pow(2, retryCount) * 1000;
+        console.log(`🔄 Tentando novamente em ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         return this.generateContent(prompt, retryCount + 1);
       }
 
       return {
         text: '',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: errorMessage
       };
     }
   }

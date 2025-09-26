@@ -20,7 +20,7 @@ export const useContractAnalysis = () => {
     try {
       const geminiService = new GeminiService({
         apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
-        model: 'gemini-1.5-flash'
+        model: 'gemini-2.0-flash-001'
       });
 
       const startTime = Date.now();
