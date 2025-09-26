@@ -49,11 +49,11 @@ export const useContractReader = () => {
       const results = await readerService.processContracts();
       
       setReaderResults(results);
-      setReaderStatus(`✅ Processamento concluído! ${results.length} contratos processados.`);
+      setReaderStatus(`✅ Processamento concluído! ${results.length} contratos processados e salvos na tabela 'reader'.`);
       
       toast({
         title: "Leitura de Contratos Concluída",
-        description: `${results.length} contratos foram processados com sucesso.`,
+        description: `${results.length} contratos foram processados e salvos na tabela 'reader' com sucesso.`,
       });
       
     } catch (error) {

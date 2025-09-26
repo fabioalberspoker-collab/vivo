@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { ContractParserResponse, ContractStorageFile } from './types';
+import { ContractParserResponse, ContractStorageFile, ContractDatabaseInsert } from './types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export class ContractReaderService {
@@ -63,69 +63,37 @@ export class ContractReaderService {
       
       console.log('🔍 Checking Supabase connection and permissions...');
       
-      // Try to get bucket info directly first
+      // Check if bucket exists without trying to create it
       try {
-        const { data: bucketInfo, error: bucketError } = await supabase.storage
-          .getBucket('documentos');
-          
+        console.log('🔍 Checking if "documentos" bucket exists...');
+        const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+        
         if (bucketError) {
-          console.log('⚠️ Bucket not found, attempting to create it...');
-          
-          // Try to create the bucket
-          const { data: newBucket, error: createError } = await supabase.storage.createBucket('documentos', {
-            public: true,
-            fileSizeLimit: 52428800, // 50MB
-            allowedMimeTypes: ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-          });
-          
-          if (createError) {
-            console.error('❌ Failed to create bucket:', createError.message);
-            if (createError.message.includes('Permission denied')) {
-              console.error('⚠️ You need admin/service_role access to create buckets');
-            }
-          } else {
-            console.log('✅ Bucket created successfully:', newBucket);
-          }
+          console.warn('⚠️ Error listing buckets:', bucketError.message);
+          console.log('📋 Continuing with assumption that "documentos" bucket exists...');
         } else {
-          console.log('📦 Bucket info:', bucketInfo);
+          const documentosBucket = buckets.find(bucket => bucket.name === 'documentos' || bucket.id === 'documentos');
+          
+          if (documentosBucket) {
+            console.log('✅ Found "documentos" bucket:', documentosBucket);
+          } else {
+            console.warn('⚠️ "documentos" bucket not found in bucket list');
+            console.log('📋 Available buckets:', buckets.map(b => b.name || b.id));
+            console.log('� Note: You may need to create the "documentos" bucket manually in Supabase Dashboard');
+          }
         }
       } catch (e) {
-        console.warn('⚠️ Could not get or create bucket:', e);
+        console.warn('⚠️ Could not check bucket existence:', e);
+        console.log('� Continuing with assumption that "documentos" bucket exists...');
       }
-      
-      // Verificar se o bucket "documentos" existe
-      console.log('🔍 Checking if "documentos" bucket exists...');
-      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-      
-      if (bucketError) {
         console.error('❌ Error listing buckets:', bucketError.message);
-        console.error('Details:', {
-          error: bucketError,
-          message: bucketError.message
-        });
-        throw bucketError;
-      }
-      
-      console.log('📦 Available buckets:', buckets?.map(b => ({ 
-        name: b.name, 
-        id: b.id,
-        public: b.public
-      })));
-      
-      // Confirmar que o bucket "documentos" existe
-      const documentosBucket = buckets?.find(b => b.name === 'documentos');
-      if (documentosBucket) {
-        console.log('✅ "documentos" bucket found:', documentosBucket);
-      } else {
-        console.warn('⚠️ "documentos" bucket not found in available buckets');
-      }
       
     } catch (e) {
-      console.error('❌ Error checking buckets:', e);
-      throw e;
+      console.error('❌ Error during setup checks:', e);
+      // Continue anyway - bucket might still work
     }
     
-    // Tentar listar arquivos no bucket "documentos"
+    // Try to list files from "documentos" bucket
     console.log('📂 Attempting to list files from "documentos" bucket...');
     const { data: rootFiles, error: rootError } = await supabase.storage
       .from(targetBucket)
@@ -138,7 +106,7 @@ export class ContractReaderService {
       console.error('❌ Error listing documents:', rootError);
       console.error('Error message:', rootError.message);
       
-      // Adicionar orientações específicas para problemas de RLS
+      // Add specific guidance for RLS problems
       if (rootError.message.includes('RLS') || rootError.message.includes('policy')) {
         console.error('🔒 This appears to be a Row Level Security (RLS) issue.');
         console.error('💡 Solutions:');
@@ -319,24 +287,31 @@ export class ContractReaderService {
         
         const prompt = `Você é um assistente especializado em análise de contratos. Analise o texto do contrato fornecido e extraia as informações solicitadas no formato JSON especificado abaixo.
 
-IMPORTANTE: Retorne APENAS o objeto JSON, sem nenhum texto adicional.
+IMPORTANTE: Retorne APENAS o objeto JSON, sem nenhum texto adicional. TODOS os campos são obrigatórios.
 
 {
+  "area_responsavel": string (área responsável pelo contrato),
   "contratado": string (nome do fornecedor/contratada),
   "contratante": string (nome da empresa contratante),
-  "tipo_fluxo": string (um dos valores: "RE", "real state", "FI", "proposta", "Engenharia", "RC"),
-  "valor_contrato": number (valor total do contrato, apenas números),
-  "valor_pagamento": number (valor de cada pagamento/parcela, apenas números),
-  "forma_pagamento": number (número de parcelas, apenas números),
-  "localizacao": {
-    "estado": string (estado de execução),
-    "cidade": string (cidade de execução)
-  },
-  "data_vencimento": string (data final em ISO, ex: "2025-12-31"),
-  "area_responsavel": string (área responsável pelo contrato),
-  "datas_vencimento_parcelas": string[] (array de datas ISO),
-  "multa": number (valor da multa, apenas números)
+  "data_vencimento": string (data final em formato YYYY-MM-DD, ex: "2025-12-31"),
+  "datas_vencimento_parcelas": string[] (array de datas em formato YYYY-MM-DD das parcelas),
+  "forma_pagamento": number (quantidade total de parcelas do contrato - MUITO IMPORTANTE: contar quantas parcelas existem),
+  "localizacao_estado": string (estado de execução, apenas sigla ex: "SP"),
+  "localizacao_cidade": string (cidade de execução),
+  "multa": number (valor da multa em reais, apenas números),
+  "tipo_fluxo": string (um dos valores: "RE", "FI", "Engenharia", "RC", "Infraestrutura", "Obras", "Serviços"),
+  "valor_contrato": number (valor total do contrato em reais, apenas números),
+  "valor_pagamento": number (valor de cada pagamento/parcela em reais, apenas números)
 }
+
+REGRAS IMPORTANTES:
+- O campo "forma_pagamento" deve conter o NÚMERO DE PARCELAS do contrato (ex: se tem 12 parcelas mensais, retornar 12)
+- Se o contrato menciona pagamento à vista, usar 1
+- Se não especificar parcelas, analisar o contexto e inferir baseado nas datas de vencimento
+- Para campos numéricos sem valor, use 0
+- Para campos de texto sem valor, use "Não informado"
+- Para arrays vazios, use []
+- Para datas sem valor, use "2001-01-01"
 
 TEXTO DO CONTRATO:
 ${content}`;
@@ -428,6 +403,16 @@ ${content}`;
 
           const parsedContract = await this.parseContract(content);
           results.push(parsedContract);
+          
+          // Salvar o contrato processado na base de dados
+          try {
+            await this.saveToDatabase(parsedContract, file);
+            console.log(`💾 Contract saved to database for file: ${file.name}`);
+          } catch (saveError) {
+            console.error(`⚠️ Failed to save contract to database for ${file.name}:`, saveError);
+            // Não falha o processamento se o salvamento der erro, apenas registra
+          }
+          
           successCount++;
           
           console.log(`✅ Successfully processed ${file.name}`);
@@ -447,6 +432,160 @@ ${content}`;
       return results;
     } catch (error) {
       console.error('❌ Fatal error processing contracts:', error);
+      throw error;
+    }
+  }
+
+  private generateContractNumber(): string {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return `CTR-${year}${month}${day}-${random}`;
+  }
+
+  private getDefaultValue(value: string | number | null | undefined, type: 'string' | 'number' | 'date'): string | number {
+    if (value !== null && value !== undefined && value !== '' && value !== 0) {
+      return value;
+    }
+    
+    switch (type) {
+      case 'string':
+        return 'Não informado';
+      case 'number':
+        return 0;
+      case 'date':
+        return '2001-01-01';
+      default:
+        return 'Não informado';
+    }
+  }
+
+  private getSmartDefaults(parsedData: ContractParserResponse, file: ContractStorageFile): ContractDatabaseInsert {
+    const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extensão
+    
+    const result: ContractDatabaseInsert = {
+      area_responsavel: this.getDefaultValue(parsedData.area_responsavel, 'string') as string || 'Área não definida',
+      contratado: this.getDefaultValue(parsedData.contratado, 'string') as string || `Fornecedor - ${fileName}`,
+      contratante: this.getDefaultValue(parsedData.contratante, 'string') as string || 'Empresa Contratante',
+      data_vencimento: this.getDefaultValue(parsedData.data_vencimento, 'date') as string,
+      datas_vencimento_parcelas: parsedData.datas_vencimento_parcelas || [],
+      forma_pagamento: Math.max(1, Math.round(this.getDefaultValue(parsedData.forma_pagamento, 'number') as number || 1)), // Minimum 1 installment
+      localizacao_estado: this.getDefaultValue(parsedData.localizacao_estado, 'string') as string || 'SP',
+      localizacao_cidade: this.getDefaultValue(parsedData.localizacao_cidade, 'string') as string || 'São Paulo',
+      multa: this.getDefaultValue(parsedData.multa, 'number') as number,
+      tipo_fluxo: this.getDefaultValue(parsedData.tipo_fluxo, 'string') as string || 'Não classificado',
+      valor_contrato: this.getDefaultValue(parsedData.valor_contrato, 'number') as number,
+      valor_pagamento: this.getDefaultValue(parsedData.valor_pagamento, 'number') as number
+    };
+
+    // Log dos valores padrão aplicados
+    const defaultsUsed = [];
+    if (!parsedData.area_responsavel) defaultsUsed.push('area_responsavel');
+    if (!parsedData.contratado) defaultsUsed.push('contratado');
+    if (!parsedData.contratante) defaultsUsed.push('contratante');
+    if (!parsedData.data_vencimento) defaultsUsed.push('data_vencimento');
+    if (!parsedData.datas_vencimento_parcelas || parsedData.datas_vencimento_parcelas.length === 0) defaultsUsed.push('datas_vencimento_parcelas');
+    if (!parsedData.forma_pagamento) defaultsUsed.push('forma_pagamento');
+    if (!parsedData.localizacao_estado) defaultsUsed.push('localizacao_estado');
+    if (!parsedData.localizacao_cidade) defaultsUsed.push('localizacao_cidade');
+    if (!parsedData.multa) defaultsUsed.push('multa');
+    if (!parsedData.tipo_fluxo) defaultsUsed.push('tipo_fluxo');
+    if (!parsedData.valor_contrato) defaultsUsed.push('valor_contrato');
+    if (!parsedData.valor_pagamento) defaultsUsed.push('valor_pagamento');
+    
+    if (defaultsUsed.length > 0) {
+      console.log(`🔧 Applied default values for: ${defaultsUsed.join(', ')}`);
+    }
+    
+    return result;
+  }
+
+  private mapToDatabase(parsedData: ContractParserResponse, file: ContractStorageFile): ContractDatabaseInsert {    
+    return this.getSmartDefaults(parsedData, file);
+  }
+
+  private async saveToDatabase(parsedData: ContractParserResponse, file: ContractStorageFile): Promise<void> {
+    console.log(`💾 Saving contract data to database for file: ${file.name}`);
+    
+    try {
+      const contractData = this.mapToDatabase(parsedData, file);
+      
+      console.log('📝 Contract data to insert:', {
+        area_responsavel: contractData.area_responsavel,
+        contratado: contractData.contratado,
+        contratante: contractData.contratante,
+        data_vencimento: contractData.data_vencimento,
+        datas_vencimento_parcelas: contractData.datas_vencimento_parcelas,
+        forma_pagamento: contractData.forma_pagamento,
+        localizacao_estado: contractData.localizacao_estado,
+        localizacao_cidade: contractData.localizacao_cidade,
+        multa: contractData.multa,
+        tipo_fluxo: contractData.tipo_fluxo,
+        valor_contrato: contractData.valor_contrato,
+        valor_pagamento: contractData.valor_pagamento
+      });
+
+      const { error } = await supabase
+        .from('reader')
+        .insert([contractData]);
+
+      if (error) {
+        console.error('❌ Error inserting contract data:', error);
+        
+        // Se erro de coluna não encontrada, tenta com campos mínimos
+        if (error.code === 'PGRST204' && error.message.includes('column')) {
+          console.log('🔄 Trying to insert with minimal fields...');
+          
+          const minimalData = {
+            area_responsavel: contractData.area_responsavel || 'Área não definida',
+            contratado: contractData.contratado || `Fornecedor - ${file.name}`,
+            contratante: contractData.contratante || 'Empresa Contratante',
+            data_vencimento: contractData.data_vencimento || '2001-01-01',
+            datas_vencimento_parcelas: contractData.datas_vencimento_parcelas || [],
+            forma_pagamento: contractData.forma_pagamento || 1,
+            localizacao_estado: contractData.localizacao_estado || 'SP',
+            localizacao_cidade: contractData.localizacao_cidade || 'São Paulo',
+            multa: contractData.multa || 0,
+            tipo_fluxo: contractData.tipo_fluxo || 'Não classificado',
+            valor_contrato: contractData.valor_contrato || 0,
+            valor_pagamento: contractData.valor_pagamento || 0
+          };
+          
+          const { error: minimalError } = await supabase
+            .from('reader')
+            .insert([minimalData]);
+            
+          if (minimalError) {
+            console.error('❌ Error with minimal data:', minimalError);
+            throw new Error(`Failed to save contract: ${minimalError.message}`);
+          } else {
+            console.log('✅ Successfully saved contract with minimal fields');
+            return;
+          }
+        }
+        
+        // Verificar se é erro de RLS e fornecer orientação específica
+        if (error.code === '42501' || error.message.includes('row-level security')) {
+          console.error('🔒 RLS ERROR DETECTED!');
+          console.error('💡 SOLUTION: Execute the following SQL in Supabase SQL Editor:');
+          console.error(`
+CREATE POLICY "Allow authenticated insert on reader" ON reader
+FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated select on reader" ON reader  
+FOR SELECT USING (true);
+          `);
+          console.error('📋 SQL Editor: https://supabase.com/dashboard/project/jstytygxbnapydwkvpzk/sql');
+        }
+        
+        throw new Error(`Failed to save contract: ${error.message}`);
+      }
+
+      console.log(`✅ Successfully saved contract for ${file.name} to database`);
+    } catch (error) {
+      console.error(`❌ Error saving contract data for ${file.name}:`, error);
       throw error;
     }
   }
