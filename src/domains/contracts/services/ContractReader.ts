@@ -18,7 +18,7 @@ export class ContractReaderService {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       this.model = genAI.getGenerativeModel({ 
-        model: "gemini-pro",
+        model: "gemini-2.0-flash-001",
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048,
@@ -41,6 +41,10 @@ export class ContractReaderService {
   private async listDocuments(): Promise<ContractStorageFile[]> {
     console.log('📄 Listing documents from Supabase storage...');
     console.log('🔗 Project URL:', 'https://supabase.com/dashboard/project/jstytygxbnapydwkvpzk');
+    console.log('📦 Target bucket:', 'documentos');
+    
+    // Use the confirmed bucket name directly
+    const targetBucket = 'documentos';
     
     // Check authentication and connection status
     try {
@@ -89,7 +93,8 @@ export class ContractReaderService {
         console.warn('⚠️ Could not get or create bucket:', e);
       }
       
-      // Now try to list all buckets
+      // Verificar se o bucket "documentos" existe
+      console.log('🔍 Checking if "documentos" bucket exists...');
       const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
       
       if (bucketError) {
@@ -107,19 +112,23 @@ export class ContractReaderService {
         public: b.public
       })));
       
-      if (!buckets?.some(b => b.name === 'documentos')) {
-        console.error('❌ The "documentos" bucket does not exist in this project!');
-        return [];
+      // Confirmar que o bucket "documentos" existe
+      const documentosBucket = buckets?.find(b => b.name === 'documentos');
+      if (documentosBucket) {
+        console.log('✅ "documentos" bucket found:', documentosBucket);
+      } else {
+        console.warn('⚠️ "documentos" bucket not found in available buckets');
       }
+      
     } catch (e) {
       console.error('❌ Error checking buckets:', e);
       throw e;
     }
     
-    // Tentar listar arquivos na raiz do bucket com mais informações de diagnóstico
+    // Tentar listar arquivos no bucket "documentos"
     console.log('📂 Attempting to list files from "documentos" bucket...');
     const { data: rootFiles, error: rootError } = await supabase.storage
-      .from('documentos')
+      .from(targetBucket)
       .list('', {
         limit: 100,
         sortBy: { column: 'name', order: 'asc' }
@@ -127,13 +136,24 @@ export class ContractReaderService {
 
     if (rootError) {
       console.error('❌ Error listing documents:', rootError);
+      console.error('Error message:', rootError.message);
+      
+      // Adicionar orientações específicas para problemas de RLS
+      if (rootError.message.includes('RLS') || rootError.message.includes('policy')) {
+        console.error('🔒 This appears to be a Row Level Security (RLS) issue.');
+        console.error('💡 Solutions:');
+        console.error('1. Disable RLS for the storage.objects table');
+        console.error('2. Create appropriate RLS policies for storage access');
+        console.error('3. Make sure the bucket is public or you have the right permissions');
+      }
+      
       throw rootError;
     }
 
     // Log do resultado da listagem
     console.log('🔍 Supabase list response:', {
       rootFiles,
-      bucketName: 'documentos',
+      bucketName: targetBucket,
       storageClient: supabase.storage,
     });
 
@@ -149,9 +169,9 @@ export class ContractReaderService {
         const contractFile = {
           id: file.id,
           name: file.name,
-          bucket: 'documentos',
+          bucket: targetBucket,
           path: file.name,
-          url: supabase.storage.from('documentos').getPublicUrl(file.name).data.publicUrl,
+          url: supabase.storage.from(targetBucket).getPublicUrl(file.name).data.publicUrl,
           contentType: file.metadata?.mimetype || 'text/plain'
         };
         console.log('📄 Found file:', contractFile);
@@ -167,7 +187,7 @@ export class ContractReaderService {
     if (files.length === 0) {
       console.warn('⚠️ No documents found in the bucket. Please check:');
       console.warn('1. If the files were uploaded successfully');
-      console.warn('2. If you have the correct bucket name (should be "documentos")');
+      console.warn(`2. If you have the correct bucket name (currently using "${targetBucket}")`);
       console.warn('3. If the files are in the root of the bucket (not in a subfolder)');
       console.warn('4. If you have the correct permissions');
     }

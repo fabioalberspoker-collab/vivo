@@ -1,7 +1,8 @@
 import { Button } from "@/shared/components/ui/button";
 import { useContractAnalysis } from "@/domains/contracts/hooks/useContractAnalysis";
+import { useContractReader } from "@/domains/contracts/hooks/useContractReader";
 import { ContractFromDB } from "@/domains/contracts/hooks/useContractFilters";
-import { Loader2, Brain } from "lucide-react";
+import { Loader2, Brain, FileText } from "lucide-react";
 
 interface HeaderProps {
   filteredContracts?: ContractFromDB[];
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 const Header = ({ filteredContracts = [] }: HeaderProps) => {
   const { analyzeContracts, isAnalyzing, analysisStatus } = useContractAnalysis();
+  const { processContracts, isReading, readerStatus } = useContractReader();
 
   const handleExportReport = async () => {
     try {
@@ -83,10 +85,31 @@ const Header = ({ filteredContracts = [] }: HeaderProps) => {
           >
             {getButtonText()}
           </Button>
-          <Button size="sm">
-            Configurações
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-vivo-purple border-vivo-purple hover:bg-vivo-purple hover:text-white"
+            onClick={processContracts}
+            disabled={isReading}
+          >
+            {isReading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processando...
+              </>
+            ) : (
+              <>
+                <FileText className="w-4 h-4 mr-2" />
+                Contract Reader
+              </>
+            )}
           </Button>
         </div>
+        {(isReading || readerStatus) && (
+          <div className="mt-2 text-sm text-gray-600">
+            {readerStatus}
+          </div>
+        )}
       </div>
     </header>
   );
